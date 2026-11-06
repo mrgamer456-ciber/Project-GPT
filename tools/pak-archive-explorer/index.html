@@ -62,7 +62,7 @@ function parse(buffer,name){
  $('strings').textContent=strings.slice(0,250).join('\n')||'Nenhuma sequência ASCII legível encontrada.';
  let lines=[];for(let i=0;i<Math.min(b.length,512);i+=16){let chunk=b.slice(i,i+16);let hx=[...chunk].map(x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47);let tx=[...chunk].map(x=>x>=32&&x<=126?String.fromCharCode(x):'.').join('');lines.push(i.toString(16).padStart(8,'0')+'  '+hx+'  '+tx)}
  $('hex').textContent=lines.join('\n')||'(arquivo vazio)';
- reportText='PAK & Archive Explorer\nArquivo: '+name+'\nFormato: '+format+'\nTamanho: '+b.length+' bytes\nDetalhes: '+details+'\nEntradas: '+entries.length+'\n\n'+entries.slice(0,500).map((e,i)=>(i+1)+'. '+e.name+' | offset '+e.offset+' | '+e.size+' bytes | '+(e.valid?'OK':'FORA DOS LIMITES')').join('\n')+'\n\nTextos encontrados:\n'+strings.slice(0,250).join('\n');
+ reportText='PAK & Archive Explorer\nArquivo: '+name+'\nFormato: '+format+'\nTamanho: '+b.length+' bytes\nDetalhes: '+details+'\nEntradas: '+entries.length+'\n\n'+entries.slice(0,500).map((e,i)=>(i+1)+'. '+e.name+' | offset '+e.offset+' | '+e.size+' bytes | '+(e.valid?'OK':'FORA DOS LIMITES')).join('\n')+'\n\nTextos encontrados:\n'+strings.slice(0,250).join('\n');
  current=b;$('results').classList.remove('hidden');$('status').textContent='Análise concluída.';
 }
 function load(file){if(!file)return;$('status').textContent='Lendo '+file.name+'…';const r=new FileReader();r.onload=()=>parse(r.result,file.name);r.onerror=()=>$('status').textContent='Não foi possível ler o arquivo.';r.readAsArrayBuffer(file)}
