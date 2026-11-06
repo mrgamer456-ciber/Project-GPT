@@ -40,6 +40,14 @@ Investigador local de contêineres de jogos. Reconhece estruturas Quake PACK e W
 - **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
 - **Limites:** não extrai nem reconstrói arquivos; ZIP e Unity são apenas identificados por assinatura nesta versão. Formatos proprietários podem não ser reconhecidos.
 
+### PS2 TIM2 Texture Inspector — Lab 005
+Ferramenta local para inspecionar arquivos de textura TIM2 do PlayStation 2. Lê o cabeçalho principal e os cabeçalhos das imagens, mostrando dimensões, formato PSM, mipmaps, tamanhos, offsets e validações básicas de limites.
+
+- **Pasta:** `tools/ps2-tim2-inspector/`
+- **Entrada:** `tools/ps2-tim2-inspector/index.html`
+- **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
+- **Limites:** não decodifica pixels, não converte para PNG e não valida completamente swizzling, alinhamento GS ou paletas. A validação estrutural é preliminar.
+
 ## Abrir as ferramentas
 A página inicial do laboratório está em [index.html](index.html) e reúne os quatro experimentos. Cada ferramenta também pode ser baixada como um arquivo `index.html` e aberta localmente em um navegador moderno.
 
