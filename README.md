@@ -32,8 +32,16 @@ Ferramenta local para investigar arquivos de jogos: detecta assinaturas comuns (
 - **Privacidade:** análise local no navegador.
 - **Aviso:** assinaturas são pistas, não garantia de formato ou extração.
 
+### PAK & Archive Explorer — Lab 004
+Investigador local de contêineres de jogos. Reconhece estruturas Quake PACK e WAD2/WAD3, identifica algumas assinaturas comuns, lista entradas quando o formato é conhecido, procura textos ASCII e exibe uma prévia HEX.
+
+- **Pasta:** `tools/pak-archive-explorer/`
+- **Entrada:** `tools/pak-archive-explorer/index.html`
+- **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
+- **Limites:** não extrai nem reconstrói arquivos; ZIP e Unity são apenas identificados por assinatura nesta versão. Formatos proprietários podem não ser reconhecidos.
+
 ## Como testar
-Abra `tools/bytescope/index.html` no navegador ou publique o repositório com GitHub Pages apontando para a raiz do site (a ferramenta está dentro de `tools/bytescope/`).
+Abra o arquivo `index.html` da ferramenta desejada no GitHub e use a visualização Raw para abrir o HTML no navegador, ou publique o repositório com GitHub Pages. Com Pages configurado para a raiz, cada ferramenta fica no caminho `/tools/NOME-DA-FERRAMENTA/`.
 
 ## Ideias para o laboratório
 Este repositório é um espaço de experimentação. Cada projeto novo deve ter sua própria pasta, instruções de uso e, quando possível, testes ou compilação automatizada.
