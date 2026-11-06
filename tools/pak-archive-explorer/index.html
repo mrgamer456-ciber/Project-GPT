@@ -34,7 +34,7 @@ function safeName(bytes){return new TextDecoder('utf-8',{fatal:false}).decode(by
 function addStat(k,v){const d=document.createElement('div');d.className='stat';const s=document.createElement('small');s.textContent=k;const b=document.createElement('strong');b.textContent=v;d.append(s,b);$('stats').append(d)}
 function parse(buffer,name){
  const b=new Uint8Array(buffer),v=new DataView(buffer),ascii=(a,n)=>String.fromCharCode(...b.slice(a,a+n));
- let format='Desconhecido',details='Não reconheci uma estrutura conhecida pelo cabeçalho.',entries=[];
+ let format='Desconhecido',details='Não reconheci uma estrutura conhecida pelo cabeçalho.',entries=[];const unitySignature=ascii(0,Math.min(8,b.length)).split('\0')[0];
  if(b.length>=12&&ascii(0,4)==='PACK'){
   format='Quake PACK';const off=u32(v,4),len=u32(v,8),count=Math.floor(len/64);
   details='Arquivo PACK clássico: diretório com entradas de 64 bytes (nome de 56 bytes + offset + tamanho).';
@@ -44,8 +44,8 @@ function parse(buffer,name){
   format=ascii(0,4)+' (WAD)';const count=u32(v,4),off=u32(v,8);details='Arquivo WAD: tabela de lumps com 32 bytes por entrada.';
   if(count<100000&&off<=b.length&&count*32<=b.length-off){for(let i=0;i<count;i++){let p=off+i*32;entries.push({name:safeName(b.slice(p+16,p+32))||'(sem nome)',offset:u32(v,p),size:u32(v,p+4)});}}
   else details+=' A tabela de lumps parece inválida ou incompleta.';
- } else if(b.length>=7&&['UnityFS','UnityRaw','UnityWeb'].includes(ascii(0,7))){
-  format=ascii(0,7)+' bundle';details='Assinatura de AssetBundle Unity reconhecida. A estrutura interna e a compressão variam por versão; esta ferramenta não extrai o conteúdo.';
+ } else if(['UnityFS','UnityRaw','UnityWeb'].includes(unitySignature)){
+  format=unitySignature+' bundle';details='Assinatura de AssetBundle Unity reconhecida. A estrutura interna e a compressão variam por versão; esta ferramenta não extrai o conteúdo.';
  } else if(b.length>=4&&ascii(0,4)==='PK\x03\x04'){
   format='ZIP';details='Contêiner ZIP detectado. Esta versão identifica a assinatura, mas não lista os arquivos internos.';
  } else if(b.length>=4&&ascii(0,4)==='IWAD'||b.length>=4&&ascii(0,4)==='PWAD'){
