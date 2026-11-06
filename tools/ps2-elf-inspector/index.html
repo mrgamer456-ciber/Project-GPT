@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PS2 ELF Inspector</title>
+<style>
+body{margin:0;padding:22px;background:#101827;color:#edf4ff;font:16px system-ui}main{max-width:760px;margin:auto}section{background:#1b2940;padding:18px;border-radius:14px;margin:14px 0}button{padding:12px;border:0;border-radius:8px;background:#71e0bd;font-weight:bold}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#a9f3da}small{color:#aabbd3}
+</style><main><h1>PS2 ELF Inspector</h1><p>Lab 002 · Project-GPT</p><section><p>Escolha um arquivo ELF do seu PS2. A análise é feita localmente no navegador.</p><input id="f" type="file"><p id="s">Aguardando arquivo…</p></section><section><h2>Resultado</h2><pre id="o">Nenhum arquivo analisado.</pre><button id="c">Copiar relatório</button></section><small>Não envia seus arquivos para a internet.</small></main>
+<script>
+const f=document.querySelector('#f'),s=document.querySelector('#s'),o=document.querySelector('#o');let report='';
+f.onchange=()=>{let file=f.files[0];if(!file)return;let r=new FileReader();r.onload=()=>{try{let b=r.result,v=new DataView(b),a=new Uint8Array(b);if(a.length<52||a[0]!=127||a[1]!=69||a[2]!=76||a[3]!=70)throw Error('Assinatura ELF não encontrada.');let cls=a[4],end=a[5],le=end===1;if(![1,2].includes(cls)||![1,2].includes(end))throw Error('Cabeçalho ELF inválido.');let m=v.getUint16(18,le),entry=cls===2?Number(v.getBigUint64(24,le)):v.getUint32(24,le),machine=({8:'MIPS',3:'Intel x86',40:'ARM',62:'x86-64'})[m]||'Desconhecida',ps2=m===8&&cls===1&&le;report='Arquivo: '+file.name+'\nTamanho: '+file.size+' bytes\nFormato: '+(cls===1?'ELF32':'ELF64')+'\nEndian: '+(le?'Little-endian':'Big-endian')+'\nMáquina: '+machine+' ('+m+')\nPonto de entrada: 0x'+entry.toString(16).toUpperCase()+'\nCompatibilidade provável com PS2: '+(ps2?'SIM — ELF32 MIPS little-endian':'NÃO CONFIRMADA')+'\n\nAviso: esta é uma identificação inicial; não garante que o ELF execute no console.';o.textContent=report;s.textContent='Análise concluída.'}catch(e){report=e.message;o.textContent=report;s.textContent='Não foi possível analisar.'}};r.readAsArrayBuffer(file)};
+document.querySelector('#c').onclick=()=>{if(report)navigator.clipboard.writeText(report).then(()=>s.textContent='Relatório copiado!')};
+</script></main>
