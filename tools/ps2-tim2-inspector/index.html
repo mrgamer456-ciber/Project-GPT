@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>PS2 TIM2 Texture Inspector — Project-GPT</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#142137;--line:#2b3b55;--text:#edf4ff;--muted:#a6b6ce;--accent:#72e0c0;--warn:#ffd27c;--bad:#ff9b9b}
+*{box-sizing:border-box}body{margin:0;padding:22px;background:radial-gradient(circle at top,#203b5a 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}main{max-width:980px;margin:auto}h1{font-size:clamp(27px,6vw,40px);margin:8px 0}p{color:var(--muted)}.tag{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.14em}.panel{background:#142137dd;border:1px solid var(--line);border-radius:15px;padding:17px;margin:15px 0}.drop{display:block;border:2px dashed #526587;border-radius:13px;padding:26px;text-align:center;cursor:pointer}.drop:hover{border-color:var(--accent)}input[type=file]{display:none}button{border:1px solid #405171;background:#22314d;color:var(--text);padding:10px 14px;border-radius:9px;font-weight:700;cursor:pointer;margin:5px 5px 5px 0}button.primary{background:var(--accent);color:#09221c;border-color:var(--accent)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px}.stat{background:#0d1528;border:1px solid var(--line);border-radius:10px;padding:11px;min-width:0}.stat small{display:block;color:var(--muted)}.stat strong{display:block;overflow-wrap:anywhere;margin-top:4px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091020;border:1px solid var(--line);border-radius:9px;padding:12px;max-height:330px;overflow:auto}.hidden{display:none}.ok{color:var(--accent)}.warn{color:var(--warn)}.bad{color:var(--bad)}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--accent)}footer{color:#8496b1;font-size:12px;text-align:center;padding:12px}
+</style></head>
+<body><main>
+<div class="tag">PROJECT-GPT · LAB 005</div>
+<h1>🧩 PS2 TIM2 Texture Inspector</h1>
+<p>Inspecione cabeçalhos de texturas TIM2 usadas em jogos de PlayStation 2. A ferramenta identifica imagens, dimensões, formatos, tamanhos e possíveis problemas de estrutura. Não modifica nem envia seus arquivos.</p>
+<section class="panel">
+<label class="drop" id="drop"><b>Toque para escolher um arquivo .TM2</b><br><span>ou solte o arquivo nesta área</span><br><br><span class="ok">Selecionar arquivo</span><input id="file" type="file" accept=".tm2,.bin,application/octet-stream"></label>
+<p id="status" aria-live="polite">Aguardando arquivo…</p>
+</section>
+<section id="results" class="hidden">
+<div class="panel"><h2>Resumo do arquivo</h2><div class="grid" id="stats"></div><p id="summary"></p></div>
+<div class="panel"><h2>Imagens encontradas</h2><div class="scroll"><table><thead><tr><th>#</th><th>Dimensões</th><th>Formato</th><th>Imagem</th><th>CLUT</th><th>Offset</th><th>Validação</th></tr></thead><tbody id="pictures"></tbody></table></div><p id="tableNote"></p></div>
+<div class="panel"><h2>Detalhes técnicos</h2><pre id="details"></pre></div>
+<div class="panel"><button class="primary" id="download">Baixar relatório TXT</button><button id="copy">Copiar relatório</button><button id="clear">Limpar</button></div>
+</section>
+<footer>Project-GPT · Lab 005 · Análise local no navegador · Não é um decodificador/renderizador de pixels</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);let report='';
+const u16=(v,o)=>v.getUint16(o,true),u32=(v,o)=>v.getUint32(o,true);
+const fmt=n=>n.toLocaleString('pt-BR')+' bytes';
+const psmNames={0:'PSMCT32 (32-bit)',1:'PSMCT24 (24-bit)',2:'PSMCT16 (16-bit)',10:'PSMT8 (8-bit indexed)',19:'PSMT4 (4-bit indexed)',20:'PSMT8H',27:'PSMT4HL',36:'PSMT4HH'};
+const clutNames={0:'Formato normal',1:'Formato CSM1',2:'Formato CSM2'};
+const imageTypes={0:'Não especificado',1:'RGB',2:'RGBA',3:'Paletizado'};
+function stat(k,v){let d=document.createElement('div');d.className='stat';let s=document.createElement('small');s.textContent=k;let b=document.createElement('strong');b.textContent=v;d.append(s,b);$('stats').append(d)}
+function parse(file,buffer){
+ const b=new Uint8Array(buffer),v=new DataView(buffer),issues=[],pics=[];
+ if(b.length<16)throw Error('Arquivo pequeno demais: o cabeçalho TIM2 precisa de pelo menos 16 bytes.');
+ const magic=String.fromCharCode(...b.slice(0,4));
+ if(magic!=='TIM2')throw Error('Assinatura TIM2 não encontrada nos primeiros 4 bytes. Encontrado: '+Array.from(b.slice(0,4),x=>x.toString(16).padStart(2,'0')).join(' '));
+ const version=b[4],imageCount=b[5],headerReserved=u16(v,6),headerReserved2=u32(v,8),globalReserved=u32(v,12);
+ if(imageCount>0&&imageCount<256){
+  let pos=16;
+  for(let i=0;i<imageCount;i++){
+   if(pos+48>b.length){issues.push('Imagem '+(i+1)+': cabeçalho de 48 bytes incompleto no offset '+pos+'.');break;}
+   const totalSize=u32(v,pos),clutSize=u32(v,pos+4),imageSize=u32(v,pos+8),headerSize=u16(v,pos+12),clutColors=u16(v,pos+14);
+   const pictureFormat=b[pos+16],mipmapCount=b[pos+17],clutType=b[pos+18],imageType=b[pos+19],width=u16(v,pos+20),height=u16(v,pos+22);
+   const imageOffset=pos+headerSize,clutOffset=imageOffset+imageSize;
+   const reasons=[];
+   if(totalSize<48)reasons.push('totalSize menor que cabeçalho mínimo');
+   if(headerSize<48)reasons.push('headerSize menor que 48');
+   if(totalSize>b.length-pos)reasons.push('totalSize ultrapassa o fim do arquivo');
+   if(headerSize>totalSize)reasons.push('headerSize maior que totalSize');
+   if(imageSize>totalSize)reasons.push('imageSize maior que totalSize');
+   if(clutSize>totalSize)reasons.push('clutSize maior que totalSize');
+   if(imageOffset>b.length||imageSize>b.length-imageOffset)reasons.push('dados da imagem incompletos');
+   if(clutOffset>b.length||clutSize>b.length-clutOffset)reasons.push('dados CLUT incompletos');
+   if(width===0||height===0)reasons.push('dimensão zero');
+   if(totalSize===0){issues.push('Imagem '+(i+1)+': totalSize é zero; não é seguro continuar lendo as próximas imagens.');break;}
+   pics.push({index:i+1,pos,totalSize,clutSize,imageSize,headerSize,clutColors,pictureFormat,mipmapCount,clutType,imageType,width,height,imageOffset,clutOffset,reasons});
+   if(totalSize>b.length-pos){issues.push('A imagem '+(i+1)+' declara tamanho além do arquivo; leitura interrompida.');break;}
+   pos+=totalSize;
+  }
+ }else issues.push('Quantidade de imagens inválida ou não suportada: '+imageCount+'.');
+ if(pics.length!==imageCount)issues.push('Cabeçalho declara '+imageCount+' imagem(ns), mas '+pics.length+' cabeçalho(s) puderam ser lidos.');
+ const versionLabel='0x'+version.toString(16).padStart(2,'0');
+ $('stats').innerHTML='';
+ stat('Arquivo',file.name);stat('Tamanho',fmt(b.length));stat('Assinatura',magic);stat('Versão',versionLabel);stat('Imagens declaradas',String(imageCount));stat('Imagens analisadas',String(pics.length));
+ $('summary').textContent=issues.length?'Atenção: '+issues.join(' '):'Cabeçalho principal e limites dos cabeçalhos de imagem parecem coerentes. Isso não confirma que os pixels possam ser decodificados.';
+ $('pictures').innerHTML='';
+ const rows=[];
+ for(const p of pics){
+  const format=psmNames[p.pictureFormat]||('PSM desconhecido ('+p.pictureFormat+')');
+  const valid=p.reasons.length===0;
+  const tr=document.createElement('tr');
+  [p.index,p.width+' × '+p.height,format,fmt(p.imageSize),fmt(p.clutSize),p.pos,valid?'OK':p.reasons.join('; ')].forEach((x,j)=>{const td=document.createElement('td');td.textContent=x;if(j===6)td.className=valid?'ok':'bad';tr.append(td)});
+  $('pictures').append(tr);
+  rows.push('Imagem '+p.index+':\n  Cabeçalho offset: '+p.pos+'\n  Tamanho total: '+p.totalSize+'\n  Header size: '+p.headerSize+'\n  Dimensões: '+p.width+' x '+p.height+'\n  Picture format / PSM: '+p.pictureFormat+' ('+format+')\n  Tipo de imagem: '+p.imageType+' ('+(imageTypes[p.imageType]||'desconhecido')+')\n  Mipmaps: '+p.mipmapCount+'\n  Image data: offset '+p.imageOffset+', '+p.imageSize+' bytes\n  CLUT: offset '+p.clutOffset+', '+p.clutSize+' bytes; '+p.clutColors+' cores; '+(clutNames[p.clutType]||'tipo '+p.clutType)+'\n  Validação: '+(valid?'OK':p.reasons.join('; ')));
+ }
+ $('tableNote').textContent=pics.length?'Os formatos PSM são identificadores do formato de pixel do PS2. A ferramenta lê metadados; não converte os pixels para PNG.':'Nenhum cabeçalho de imagem completo foi encontrado.';
+ $('details').textContent='TIM2 HEADER\nVersão: '+versionLabel+'\nNúmero de imagens: '+imageCount+'\nReserved (u16): 0x'+headerReserved.toString(16)+'\nReserved (u32): 0x'+headerReserved2.toString(16)+'\nGlobal reserved: 0x'+globalReserved.toString(16)+'\n\n'+(rows.join('\n\n')||'Nenhum detalhe de imagem disponível.')+'\n\nAVISOS\n'+(issues.length?issues.map(x=>'• '+x).join('\n'):'Nenhuma inconsistência estrutural básica detectada.')+'\n\nLIMITAÇÃO\nEste relatório valida campos básicos e limites declarados. Não valida swizzling, alinhamento GS, paletas em detalhe nem decodifica a imagem.';
+ report='PROJECT-GPT — PS2 TIM2 TEXTURE INSPECTOR\nArquivo: '+file.name+'\nTamanho: '+b.length+' bytes\nVersão: '+versionLabel+'\nImagens declaradas: '+imageCount+'\nImagens analisadas: '+pics.length+'\n\n'+$('details').textContent;
+ $('results').classList.remove('hidden');$('status').textContent='Análise concluída.';
+}
+function load(file){if(!file)return;$('status').textContent='Lendo '+file.name+'…';const r=new FileReader();r.onload=()=>{try{parse(file,r.result)}catch(e){$('status').textContent='Não foi possível analisar: '+e.message;$('results').classList.add('hidden')}};r.onerror=()=>$('status').textContent='Falha ao ler o arquivo.';r.readAsArrayBuffer(file)}
+$('drop').addEventListener('click',e=>{if(e.target.tagName!=='INPUT')$('file').click()});
+$('file').addEventListener('change',e=>load(e.target.files[0]));
+['dragenter','dragover'].forEach(n=>$('drop').addEventListener(n,e=>{e.preventDefault();$('drop').style.borderColor='var(--accent)'}));
+['dragleave','drop'].forEach(n=>$('drop').addEventListener(n,e=>{e.preventDefault();$('drop').style.borderColor=''}));
+$('drop').addEventListener('drop',e=>load(e.dataTransfer.files[0]));
+$('download').onclick=()=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([report],{type:'text/plain;charset=utf-8'}));a.href=u;a.download='tim2-inspection.txt';a.click();URL.revokeObjectURL(u)};
+$('copy').onclick=()=>{if(report)navigator.clipboard.writeText(report).then(()=>$('status').textContent='Relatório copiado.').catch(()=>$('status').textContent='Não foi possível copiar neste navegador.')};
+$('clear').onclick=()=>{$('file').value='';$('results').classList.add('hidden');$('status').textContent='Aguardando arquivo…';report=''};
+</script></body></html>
