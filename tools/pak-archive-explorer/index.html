@@ -54,15 +54,15 @@ function parse(buffer,name){
   format='ELF';details='Executável ELF detectado, não um arquivo de pacote.';
  }
  entries=entries.map(e=>({...e,valid:e.offset<=b.length&&e.size<=b.length-e.offset}));const invalidEntries=entries.filter(e=>!e.valid).length;if(invalidEntries)details+=' Atenção: '+invalidEntries+' entrada(s) apontam para fora dos limites do arquivo.';
- const strings=[];let run='';for(let i=0;i<b.length;i++){let c=b[i];if(c>=32&&c<=126){run+=String.fromCharCode(c)}else{if(run.length>=5)strings.push(run);run='';}}if(run.length>=5)strings.push(run);
+ const strings=[];let run='';const stringScanLimit=Math.min(b.length,1048576);for(let i=0;i<stringScanLimit&&strings.length<250;i++){let c=b[i];if(c>=32&&c<=126){run+=String.fromCharCode(c)}else{if(run.length>=5)strings.push(run);run='';}}if(run.length>=5&&strings.length<250)strings.push(run);const stringsLimited=b.length>stringScanLimit||strings.length>=250;
  $('stats').innerHTML='';addStat('Arquivo',name);addStat('Formato',format);addStat('Tamanho',fmt(b.length));addStat('Entradas listadas',String(entries.length));addStat('Entradas fora dos limites',String(invalidEntries));
  $('note').textContent=details;
  $('entries').innerHTML='';for(let i=0;i<Math.min(entries.length,500);i++){let e=entries[i],tr=document.createElement('tr');[i+1,e.name,e.offset,fmt(e.size),e.valid?'OK':'fora do arquivo'].forEach((x,j)=>{let td=document.createElement('td');td.textContent=x;if(j===4&&!e.valid)td.style.color='#ff9b9b';tr.append(td)});$('entries').append(tr)}
  $('entryNote').textContent=entries.length>500?'Exibindo as primeiras 500 entradas.':entries.length?'Offsets e tamanhos foram lidos do diretório do arquivo.':'Nenhuma lista de entradas disponível para esta assinatura.';
- $('strings').textContent=strings.slice(0,250).join('\n')||'Nenhuma sequência ASCII legível encontrada.';
+ $('strings').textContent=(strings.join('\n')||'Nenhuma sequência ASCII legível encontrada.')+(stringsLimited?'\n\n[Resultado limitado aos primeiros 1 MiB e até 250 sequências.]':'');
  let lines=[];for(let i=0;i<Math.min(b.length,512);i+=16){let chunk=b.slice(i,i+16);let hx=[...chunk].map(x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47);let tx=[...chunk].map(x=>x>=32&&x<=126?String.fromCharCode(x):'.').join('');lines.push(i.toString(16).padStart(8,'0')+'  '+hx+'  '+tx)}
  $('hex').textContent=lines.join('\n')||'(arquivo vazio)';
- reportText='PAK & Archive Explorer\nArquivo: '+name+'\nFormato: '+format+'\nTamanho: '+b.length+' bytes\nDetalhes: '+details+'\nEntradas: '+entries.length+'\n\n'+entries.slice(0,500).map((e,i)=>(i+1)+'. '+e.name+' | offset '+e.offset+' | '+e.size+' bytes | '+(e.valid?'OK':'FORA DOS LIMITES')).join('\n')+'\n\nTextos encontrados:\n'+strings.slice(0,250).join('\n');
+ reportText='PAK & Archive Explorer\nArquivo: '+name+'\nFormato: '+format+'\nTamanho: '+b.length+' bytes\nDetalhes: '+details+'\nEntradas: '+entries.length+'\n\n'+entries.slice(0,500).map((e,i)=>(i+1)+'. '+e.name+' | offset '+e.offset+' | '+e.size+' bytes | '+(e.valid?'OK':'FORA DOS LIMITES')).join('\n')+'\n\nTextos encontrados (primeiro 1 MiB; máximo 250):\n'+strings.join('\n')+(stringsLimited?'\n[Resultado limitado.]':'');
  current=b;$('results').classList.remove('hidden');$('status').textContent='Análise concluída.';
 }
 function load(file){if(!file)return;$('status').textContent='Lendo '+file.name+'…';const r=new FileReader();r.onload=()=>parse(r.result,file.name);r.onerror=()=>$('status').textContent='Não foi possível ler o arquivo.';r.readAsArrayBuffer(file)}
