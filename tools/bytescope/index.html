@@ -27,12 +27,15 @@ main{max-width:1100px;margin:auto;padding:28px 18px 60px}.top{display:flex;align
 (()=>{const $=id=>document.getElementById(id),MAX=65536;let file=null,data=null,shown=0;
 const fmt=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(2)+' KB':(n/1048576).toFixed(2)+' MB';
 const hex=n=>n.toString(16).toUpperCase().padStart(2,'0');
-function render(){if(!data)return;const q=$('search').value.trim().toUpperCase().replace(/[^0-9A-F]/g,'');let rows='',found=-1;
+function render(){if(!data)return;const raw=$('search').value.trim();const q=raw.replace(/[^0-9A-F]/gi,'').toUpperCase();let found=-1,pattern=[];
+if(raw&&q&&q.length%2===0){pattern=q.match(/../g).map(x=>parseInt(x,16));outer:for(let i=0;i<=data.length-pattern.length;i++){for(let j=0;j<pattern.length;j++)if(data[i+j]!==pattern[j])continue outer;found=i;break;}}
+let rows='';
 for(let i=0;i<data.length;i+=16){let cells=[],ascii='';for(let j=0;j<16;j++){const b=data[i+j];cells.push(b===undefined?'  ':hex(b));ascii+=b===undefined?' ':b>=32&&b<=126?String.fromCharCode(b):'.';}
-const line=cells.join(' ');if(q&&found<0&&line.replace(/ /g,'').includes(q))found=i;
-rows+='<tr><td class="offset">'+i.toString(16).toUpperCase().padStart(8,'0')+'</td><td class="bytes">'+line+'</td><td class="ascii">'+ascii.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</td></tr>';}
+const line=cells.join(' ');
+rows+='<tr><td class="offset">'+i.toString(16).toUpperCase().padStart(8,'0')+'</td><td class="bytes">'+line+'</td><td class="ascii">'+ascii.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</td></tr>';}
 $('hexwrap').innerHTML='<table class="hex"><tbody>'+rows+'</tbody></table>';
-$('status').textContent=(data.length<file.size?'Exibindo os primeiros 64 KiB de ':'Exibindo ')+fmt(data.length)+(q?(found>=0?' · sequência encontrada perto de 0x'+found.toString(16).toUpperCase():' · sequência não encontrada na área exibida'):'');
+let suffix='';if(raw){if(!q||q.length%2)suffix=' · use pares hexadecimais (ex.: 4D 5A)';else suffix=found>=0?' · sequência encontrada em 0x'+found.toString(16).toUpperCase():' · sequência não encontrada na área exibida';}
+$('status').textContent=(data.length<file.size?'Exibindo os primeiros 64 KiB de ':'Exibindo ')+fmt(data.length)+suffix;
 }
 async function load(f){file=f;const buf=await f.slice(0,MAX).arrayBuffer();data=new Uint8Array(buf);$('details').hidden=false;$('name').textContent=f.name;$('size').textContent=fmt(f.size);$('bytes').textContent=f.size.toLocaleString('pt-BR');$('type').textContent=f.type||'Não informado';['copy','copyAscii','download','clear','search'].forEach(id=>$(id).disabled=false);$('search').value='';render();}
 function hexText(){return Array.from(data,b=>hex(b)).join(' ')}
