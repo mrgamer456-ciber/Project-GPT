@@ -30,12 +30,15 @@ const signatures=[
 {n:'WAVE',b:[0x52,0x49,0x46,0x46],why:'RIFF; confira se aparece WAVE no offset 8.'},
 {n:'WAD Doom',b:[0x49,0x57,0x41,0x44],why:'Cabeçalho IWAD. PWAD começa com PWAD.'},
 {n:'WAD Doom (PWAD)',b:[0x50,0x57,0x41,0x44],why:'Pacote de dados PWAD.'},
+{n:'Quake WAD2',b:[0x57,0x41,0x44,0x32],why:'Contêiner WAD2 de Quake.'},
+{n:'Quake WAD3',b:[0x57,0x41,0x44,0x33],why:'Contêiner WAD3, usado por jogos baseados em GoldSrc.'},
 {n:'ELF',b:[0x7f,0x45,0x4c,0x46],why:'Executável ou objeto ELF; arquitetura precisa ser lida no cabeçalho.'},
-{n:'Unity bundle (assinatura UnityFS)',s:'UnityFS',why:'Possível AssetBundle UnityFS.'},
-{n:'Quake PACK',s:'PACK',why:'Possível arquivo PACK de Quake; cabeçalho normalmente contém diretório.'},
-{n:'Valve VPK',s:' VPK',why:'Texto VPK pode aparecer em cabeçalho ou conteúdo; confirme estrutura.'}
+{n:'Unity bundle (UnityFS)',b:[0x55,0x6e,0x69,0x74,0x79,0x46,0x53],why:'Assinatura UnityFS no início do arquivo; esta ferramenta não extrai o bundle.'},
+{n:'Quake PACK',b:[0x50,0x41,0x43,0x4b],why:'Cabeçalho PACK clássico de Quake; confira o diretório antes de extrair.'},
+{n:'Valve VPK (arquivo de índice)',b:[0x34,0x12,0xaa,0x55],why:'Magic 34 12 AA 55 de um VPK de índice (_dir.vpk); arquivos de dados numerados podem não ter esse cabeçalho.'}
 ];
-function cell(k,v){return '<div class="cell"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'}
+function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function cell(k,v){return '<div class="cell"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>'}
 function analyze(file,buf){
  const a=new Uint8Array(buf),n=Math.min(a.length,1048576),head=a.slice(0,Math.min(128,a.length));
  const hexLines=[];for(let i=0;i<head.length;i+=16){let part=head.slice(i,i+16),h=Array.from(part,x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47,' '),txt=Array.from(part,x=>x>=32&&x<=126?String.fromCharCode(x):'.').join('');hexLines.push(i.toString(16).padStart(8,'0')+'  '+h+'  '+txt)}
