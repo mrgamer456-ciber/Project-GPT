@@ -27,7 +27,7 @@ const signatures=[
 {n:'JPEG',b:[0xff,0xd8,0xff],why:'Imagem JPEG.'},
 {n:'GIF',b:[0x47,0x49,0x46,0x38],why:'Imagem GIF.'},
 {n:'Ogg / áudio',b:[0x4f,0x67,0x67,0x53],why:'Contêiner Ogg; pode conter Vorbis ou Opus.'},
-{n:'WAVE',b:[0x52,0x49,0x46,0x46],why:'RIFF; confira se aparece WAVE no offset 8.'},
+{n:'RIFF container',b:[0x52,0x49,0x46,0x46],why:'Contêiner RIFF. O subtipo (WAVE, AVI, WEBP etc.) fica nos bytes 8–11.'},
 {n:'WAD Doom',b:[0x49,0x57,0x41,0x44],why:'Cabeçalho IWAD. PWAD começa com PWAD.'},
 {n:'WAD Doom (PWAD)',b:[0x50,0x57,0x41,0x44],why:'Pacote de dados PWAD.'},
 {n:'Quake WAD2',b:[0x57,0x41,0x44,0x32],why:'Contêiner WAD2 de Quake.'},
@@ -43,7 +43,7 @@ function analyze(file,buf){
  const a=new Uint8Array(buf),n=Math.min(a.length,1048576),head=a.slice(0,Math.min(128,a.length));
  const hexLines=[];for(let i=0;i<head.length;i+=16){let part=head.slice(i,i+16),h=Array.from(part,x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47,' '),txt=Array.from(part,x=>x>=32&&x<=126?String.fromCharCode(x):'.').join('');hexLines.push(i.toString(16).padStart(8,'0')+'  '+h+'  '+txt)}
  let found=signatures.filter(s=>s.b?s.b.every((v,i)=>a[i]===v):new TextDecoder('ascii').decode(a.slice(0,Math.min(128,a.length))).includes(s.s));
- if(a.length>=12&&String.fromCharCode(...a.slice(0,4))==='RIFF'&&String.fromCharCode(...a.slice(8,12))==='WAVE')found=found.map(x=>x.n==='WAVE'?{...x,n:'WAVE áudio',why:'Arquivo de áudio RIFF/WAVE.'}:x);
+ const riffType=a.length>=12&&String.fromCharCode(...a.slice(0,4))==='RIFF'?String.fromCharCode(...a.slice(8,12)):'';const riffLabels={WAVE:['WAVE áudio','Arquivo de áudio RIFF/WAVE.'],AVI:['AVI vídeo','Contêiner de vídeo RIFF/AVI.'],WEBP:['WebP imagem','Imagem WebP armazenada em contêiner RIFF.']};if(riffType&&riffLabels[riffType]){const label=riffLabels[riffType];found=found.map(x=>x.n==='RIFF container'?{...x,n:label[0],why:label[1]}:x);}
  let strings=[],cur='',start=0;for(let i=0;i<n;i++){let c=a[i];if(c>=32&&c<=126){if(!cur)start=i;cur+=String.fromCharCode(c)}else{if(cur.length>=5)strings.push(start.toString(16).padStart(8,'0')+'  '+cur);cur=''}}if(cur.length>=5)strings.push(start.toString(16).padStart(8,'0')+'  '+cur);
  let label=found.length?found.map(x=>x.n).join(' / '):'Desconhecido — pode ser formato proprietário';
  $('facts').innerHTML=[['Arquivo',file.name],['Tamanho',file.size.toLocaleString('pt-BR')+' bytes'],['Tipo do navegador',file.type||'Não identificado'],['Bytes analisados',n.toLocaleString('pt-BR')],['Assinatura',found.length?'Possível correspondência':'Sem assinatura conhecida']].map(x=>cell(...x)).join('');
