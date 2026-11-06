@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>ByteScope — Project-GPT</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#131f32;--line:#26364d;--text:#e8eef8;--muted:#9aabc2;--accent:#65d6ad;--blue:#83b7ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#18304a 0,transparent 36%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1100px;margin:auto;padding:28px 18px 60px}.top{display:flex;align-items:center;gap:12px;margin-bottom:24px}.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#65d6ad,#4388e8);display:grid;place-items:center;color:#081522;font-weight:900;font-size:19px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.15em;text-transform:uppercase;font-weight:700}h1{font-size:clamp(26px,5vw,42px);margin:0}p{color:var(--muted)}.panel{background:linear-gradient(180deg,#17263b,#111c2d);border:1px solid var(--line);border-radius:18px;padding:20px;margin:16px 0;box-shadow:0 16px 45px #0003}.drop{border:1.5px dashed #49627f;border-radius:14px;padding:28px;text-align:center;background:#0b1727}.drop.drag{border-color:var(--accent);background:#102b2a}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}button,.filebtn{border:1px solid #3b526e;background:#1c3048;color:var(--text);border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}button.primary{background:var(--accent);color:#092018;border-color:var(--accent);font-weight:800}button:disabled{opacity:.4;cursor:not-allowed}input[type=file]{display:none}input[type=search]{background:#0b1727;color:var(--text);border:1px solid var(--line);padding:10px;border-radius:9px;min-width:180px;max-width:100%}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.stat{background:#0b1727;border:1px solid var(--line);padding:12px;border-radius:12px}.stat small{display:block;color:var(--muted)}.stat strong{font-size:18px;overflow-wrap:anywhere}.hexwrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:12px;background:#08111e}.hex{border-collapse:collapse;width:100%;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre}.hex td{padding:1px 8px}.offset{color:#7e9ab9}.bytes{color:#c8d8ee}.ascii{color:var(--accent);border-left:1px solid var(--line)}.empty{text-align:center;color:var(--muted);padding:24px}.hint{font-size:13px;color:var(--muted)}footer{margin-top:30px;color:var(--muted);font-size:12px}a{color:var(--blue)}
+@media(max-width:600px){main{padding:18px 12px 40px}.panel{padding:14px}.hex td{padding:1px 5px;font-size:11px}}
+</style>
+</head>
+<body><main>
+<header class="top"><div class="logo">B</div><div><div class="eyebrow">PROJECT-GPT · LAB 001</div><h1>ByteScope</h1><div class="hint">Visualizador binário local — seus arquivos não saem do aparelho.</div></div></header>
+<section class="panel">
+<h2>Abra um arquivo</h2><div id="drop" class="drop"><strong>Solte um arquivo aqui</strong><p>ou escolha um arquivo do celular/computador</p><label class="filebtn primary" for="file">Selecionar arquivo</label><input id="file" type="file"></div>
+<div class="actions"><button id="copy" disabled>Copiar HEX</button><button id="copyAscii" disabled>Copiar texto ASCII</button><button id="download" disabled>Baixar relatório .txt</button><button id="clear" disabled>Limpar</button></div>
+<p class="hint">A visualização mostra os primeiros 64 KiB para manter o navegador leve. O relatório informa o tamanho total.</p>
+</section>
+<section id="details" class="panel" hidden><h2>Informações do arquivo</h2><div class="stats"><div class="stat"><small>Nome</small><strong id="name">—</strong></div><div class="stat"><small>Tamanho</small><strong id="size">—</strong></div><div class="stat"><small>Bytes totais</small><strong id="bytes">—</strong></div><div class="stat"><small>Tipo informado</small><strong id="type">—</strong></div></div></section>
+<section class="panel"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h2>Hexadecimal</h2><input id="search" type="search" placeholder="Buscar bytes (ex.: 4D 5A)" disabled></div><div id="hexwrap" class="hexwrap"><div class="empty">Nenhum arquivo carregado ainda.</div></div><p id="status" class="hint">Cada linha contém o endereço, 16 bytes em hexadecimal e a leitura ASCII.</p></section>
+<footer>ByteScope é um experimento original do Project-GPT. Processamento 100% local no navegador; nenhum upload é realizado.</footer>
+</main>
+<script>
+(()=>{const $=id=>document.getElementById(id),MAX=65536;let file=null,data=null,shown=0;
+const fmt=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(2)+' KB':(n/1048576).toFixed(2)+' MB';
+const hex=n=>n.toString(16).toUpperCase().padStart(2,'0');
+function render(){if(!data)return;const q=$('search').value.trim().toUpperCase().replace(/[^0-9A-F]/g,'');let rows='',found=-1;
+for(let i=0;i<data.length;i+=16){let cells=[],ascii='';for(let j=0;j<16;j++){const b=data[i+j];cells.push(b===undefined?'  ':hex(b));ascii+=b===undefined?' ':b>=32&&b<=126?String.fromCharCode(b):'.';}
+const line=cells.join(' ');if(q&&found<0&&line.replace(/ /g,'').includes(q))found=i;
+rows+='<tr><td class="offset">'+i.toString(16).toUpperCase().padStart(8,'0')+'</td><td class="bytes">'+line+'</td><td class="ascii">'+ascii.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</td></tr>';}
+$('hexwrap').innerHTML='<table class="hex"><tbody>'+rows+'</tbody></table>';
+$('status').textContent=(data.length<file.size?'Exibindo os primeiros 64 KiB de ':'Exibindo ')+fmt(data.length)+(q?(found>=0?' · sequência encontrada perto de 0x'+found.toString(16).toUpperCase():' · sequência não encontrada na área exibida'):'');
+}
+async function load(f){file=f;const buf=await f.slice(0,MAX).arrayBuffer();data=new Uint8Array(buf);$('details').hidden=false;$('name').textContent=f.name;$('size').textContent=fmt(f.size);$('bytes').textContent=f.size.toLocaleString('pt-BR');$('type').textContent=f.type||'Não informado';['copy','copyAscii','download','clear','search'].forEach(id=>$(id).disabled=false);$('search').value='';render();}
+function hexText(){return Array.from(data,b=>hex(b)).join(' ')}
+$('file').addEventListener('change',e=>{if(e.target.files[0])load(e.target.files[0])});
+$('search').addEventListener('input',render);
+$('copy').onclick=()=>navigator.clipboard.writeText(hexText()).then(()=>$('status').textContent='HEX copiado!');
+$('copyAscii').onclick=()=>navigator.clipboard.writeText(Array.from(data,b=>b>=32&&b<=126?String.fromCharCode(b):'.').join('')).then(()=>$('status').textContent='ASCII copiado!');
+$('download').onclick=()=>{const report='ByteScope — Relatório\nArquivo: '+file.name+'\nTamanho: '+file.size+' bytes ('+fmt(file.size)+')\nTipo: '+(file.type||'não informado')+'\n\nHEX (primeiros 64 KiB):\n'+hexText();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([report],{type:'text/plain'}));a.download=file.name+'.bytescope.txt';a.click();URL.revokeObjectURL(a.href)};
+$('clear').onclick=()=>{file=data=null;$('file').value='';$('details').hidden=true;$('hexwrap').innerHTML='<div class="empty">Nenhum arquivo carregado ainda.</div>';['copy','copyAscii','download','clear','search'].forEach(id=>$(id).disabled=true);$('status').textContent='Nenhum arquivo carregado.'};
+const d=$('drop');['dragenter','dragover'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.add('drag')}));['dragleave','drop'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.remove('drag')}));d.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)load(f)});
+})();
+</script></body></html>
