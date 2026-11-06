@@ -40,8 +40,10 @@ Investigador local de contêineres de jogos. Reconhece estruturas Quake PACK e W
 - **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
 - **Limites:** não extrai nem reconstrói arquivos; ZIP e Unity são apenas identificados por assinatura nesta versão. Formatos proprietários podem não ser reconhecidos.
 
-## Como testar
-Abra o arquivo `index.html` da ferramenta desejada no GitHub e use a visualização Raw para abrir o HTML no navegador, ou publique o repositório com GitHub Pages. Com Pages configurado para a raiz, cada ferramenta fica no caminho `/tools/NOME-DA-FERRAMENTA/`.
+## Abrir as ferramentas
+A página inicial do laboratório está em [index.html](index.html) e reúne os quatro experimentos. Cada ferramenta também pode ser baixada como um arquivo `index.html` e aberta localmente em um navegador moderno.
+
+O repositório está preparado com caminhos relativos para hospedagem estática, mas **GitHub Pages não foi ativado** nesta revisão. Se quiser publicar o site, habilite Pages manualmente nas configurações do repositório, usando a branch `main` e a raiz (`/`).
 
 ## Ideias para o laboratório
 Este repositório é um espaço de experimentação. Cada projeto novo deve ter sua própria pasta, instruções de uso e, quando possível, testes ou compilação automatizada.
