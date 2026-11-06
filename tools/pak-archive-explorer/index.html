@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PAK & Archive Explorer — Project-GPT</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151d32;--line:#2b3856;--text:#eaf0ff;--muted:#9eacc8;--accent:#72e0c0}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#1b2a45,var(--bg) 55%);color:var(--text);font:15px system-ui, sans-serif;padding:22px}
+main{max-width:980px;margin:auto}h1{margin:0 0 8px;font-size:clamp(25px,5vw,38px)}p{color:var(--muted);line-height:1.5}.panel{background:#151d32dd;border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0;box-shadow:0 12px 35px #0003}
+.drop{border:2px dashed #526587;border-radius:14px;padding:28px;text-align:center;cursor:pointer}.drop:hover,.drop.over{border-color:var(--accent);background:#72e0c00d}input[type=file]{display:none}
+button{border:1px solid #405171;background:#22314d;color:var(--text);padding:10px 14px;border-radius:10px;font-weight:650;cursor:pointer;margin:5px 5px 5px 0}button.primary{background:var(--accent);color:#09221c;border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.stat{background:#0d1528;border:1px solid var(--line);border-radius:12px;padding:12px}.stat small{display:block;color:var(--muted)}.stat strong{display:block;overflow-wrap:anywhere;margin-top:5px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091020;border:1px solid var(--line);border-radius:10px;padding:13px;max-height:360px;overflow:auto;color:#c9d7f5}.hidden{display:none}.tag{color:var(--accent);font-weight:700}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{color:var(--accent)}.scroll{overflow:auto}
+</style></head>
+<body><main>
+<h1>🧩 PAK & Archive Explorer</h1>
+<p>Laboratório 004 · Investigador local de arquivos de jogos. Abra um arquivo no navegador: nada é enviado para servidor.</p>
+<section class="panel">
+<label class="drop" id="drop"><strong>Solte o arquivo aqui</strong><br><span>ou toque para escolher um arquivo</span><br><br><span class="tag">Selecionar arquivo</span><input id="file" type="file"></label>
+<div id="status" aria-live="polite">Aguardando arquivo…</div>
+</section>
+<section id="results" class="hidden">
+<div class="panel"><h2>Resumo</h2><div class="grid" id="stats"></div><p id="note"></p></div>
+<div class="panel"><h2>Conteúdo reconhecido</h2><div class="scroll"><table><thead><tr><th>#</th><th>Nome / entrada</th><th>Offset</th><th>Tamanho</th></tr></thead><tbody id="entries"></tbody></table></div><p id="entryNote"></p></div>
+<div class="panel"><h2>Textos encontrados</h2><pre id="strings">—</pre></div>
+<div class="panel"><h2>Prévia hexadecimal</h2><pre id="hex">—</pre><button id="copy">Copiar HEX</button><button id="report" class="primary">Baixar relatório TXT</button><button id="clear">Limpar</button></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let current=null,reportText='';
+const fmt=n=>n.toLocaleString('pt-BR')+' bytes';
+function u32(v,o,le=true){return le?v.getUint32(o,true):v.getUint32(o,false)}
+function safeName(bytes){return new TextDecoder('utf-8',{fatal:false}).decode(bytes).replace(/[\0\x00-\x1f]/g,'').trim()}
+function addStat(k,v){const d=document.createElement('div');d.className='stat';const s=document.createElement('small');s.textContent=k;const b=document.createElement('strong');b.textContent=v;d.append(s,b);$('stats').append(d)}
+function parse(buffer,name){
+ const b=new Uint8Array(buffer),v=new DataView(buffer),ascii=(a,n)=>String.fromCharCode(...b.slice(a,a+n));
+ let format='Desconhecido',details='Não reconheci uma estrutura conhecida pelo cabeçalho.',entries=[];
+ if(b.length>=12&&ascii(0,4)==='PACK'){
+  format='Quake PACK';const off=u32(v,4),len=u32(v,8),count=Math.floor(len/64);
+  details='Arquivo PACK clássico: diretório com entradas de 64 bytes (nome de 56 bytes + offset + tamanho).';
+  if(off<=b.length&&len<=b.length-off&&len%64===0&&count<100000){for(let i=0;i<count;i++){let p=off+i*64;entries.push({name:safeName(b.slice(p,p+56)),offset:u32(v,p+56),size:u32(v,p+60)});}}
+  else details+=' O diretório declarado parece inválido ou incompleto.';
+ } else if(b.length>=12&&['WAD2','WAD3'].includes(ascii(0,4))){
+  format=ascii(0,4)+' (WAD)';const count=u32(v,4),off=u32(v,8);details='Arquivo WAD: tabela de lumps com 32 bytes por entrada.';
+  if(count<100000&&off<=b.length&&count*32<=b.length-off){for(let i=0;i<count;i++){let p=off+i*32;entries.push({name:safeName(b.slice(p+16,p+32))||'(sem nome)',offset:u32(v,p),size:u32(v,p+4)});}}
+  else details+=' A tabela de lumps parece inválida ou incompleta.';
+ } else if(b.length>=4&&ascii(0,4)==='Unity'){
+  format='Unity bundle';details='Assinatura Unity detectada. A versão e a estrutura interna dependem do formato do bundle.';
+ } else if(b.length>=4&&ascii(0,4)==='PK\x03\x04'){
+  format='ZIP';details='Contêiner ZIP detectado. Esta versão identifica a assinatura, mas não lista os arquivos internos.';
+ } else if(b.length>=4&&ascii(0,4)==='IWAD'||b.length>=4&&ascii(0,4)==='PWAD'){
+  format=ascii(0,4)+' (Doom WAD)';details='WAD de Doom detectado. Cabeçalho reconhecido; diretório requer validação adicional.';
+ } else if(b.length>=4&&ascii(0,4)==='\x7fELF'){
+  format='ELF';details='Executável ELF detectado, não um arquivo de pacote.';
+ }
+ const strings=[];let run='';for(let i=0;i<b.length;i++){let c=b[i];if(c>=32&&c<=126){run+=String.fromCharCode(c)}else{if(run.length>=5)strings.push(run);run='';}}if(run.length>=5)strings.push(run);
+ $('stats').innerHTML='';addStat('Arquivo',name);addStat('Formato',format);addStat('Tamanho',fmt(b.length));addStat('Entradas listadas',String(entries.length));
+ $('note').textContent=details;
+ $('entries').innerHTML='';for(let i=0;i<Math.min(entries.length,500);i++){let e=entries[i],tr=document.createElement('tr');[i+1,e.name,e.offset,fmt(e.size)].forEach(x=>{let td=document.createElement('td');td.textContent=x;tr.append(td)});$('entries').append(tr)}
+ $('entryNote').textContent=entries.length>500?'Exibindo as primeiras 500 entradas.':entries.length?'Offsets e tamanhos foram lidos do diretório do arquivo.':'Nenhuma lista de entradas disponível para esta assinatura.';
+ $('strings').textContent=strings.slice(0,250).join('\n')||'Nenhuma sequência ASCII legível encontrada.';
+ let lines=[];for(let i=0;i<Math.min(b.length,512);i+=16){let chunk=b.slice(i,i+16);let hx=[...chunk].map(x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47);let tx=[...chunk].map(x=>x>=32&&x<=126?String.fromCharCode(x):'.').join('');lines.push(i.toString(16).padStart(8,'0')+'  '+hx+'  '+tx)}
+ $('hex').textContent=lines.join('\n')||'(arquivo vazio)';
+ reportText='PAK & Archive Explorer\nArquivo: '+name+'\nFormato: '+format+'\nTamanho: '+b.length+' bytes\nDetalhes: '+details+'\nEntradas: '+entries.length+'\n\n'+entries.slice(0,500).map((e,i)=>(i+1)+'. '+e.name+' | offset '+e.offset+' | '+e.size+' bytes').join('\n')+'\n\nTextos encontrados:\n'+strings.slice(0,250).join('\n');
+ current=b;$('results').classList.remove('hidden');$('status').textContent='Análise concluída.';
+}
+function load(file){if(!file)return;$('status').textContent='Lendo '+file.name+'…';const r=new FileReader();r.onload=()=>parse(r.result,file.name);r.onerror=()=>$('status').textContent='Não foi possível ler o arquivo.';r.readAsArrayBuffer(file)}
+$('drop').addEventListener('click',e=>{if(e.target.tagName!=='INPUT')$('file').click()});
+$('file').addEventListener('change',e=>load(e.target.files[0]));
+['dragenter','dragover'].forEach(n=>$('drop').addEventListener(n,e=>{e.preventDefault();$('drop').classList.add('over')}));
+['dragleave','drop'].forEach(n=>$('drop').addEventListener(n,e=>{e.preventDefault();$('drop').classList.remove('over')}));
+$('drop').addEventListener('drop',e=>load(e.dataTransfer.files[0]));
+$('copy').onclick=()=>{if(current)navigator.clipboard.writeText($('hex').textContent).then(()=>$('status').textContent='HEX copiado.').catch(()=>$('status').textContent='Cópia não permitida neste navegador.')};
+$('report').onclick=()=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([reportText],{type:'text/plain;charset=utf-8'}));a.href=u;a.download='relatorio-arquivo.txt';a.click();URL.revokeObjectURL(u)};
+$('clear').onclick=()=>{current=null;reportText='';$('results').classList.add('hidden');$('file').value='';$('status').textContent='Aguardando arquivo…'};
+</script></body></html>
