@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game File Detective — Project-GPT</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;padding:20px;background:#0d1422;color:#edf3ff;font:15px system-ui}main{max-width:850px;margin:auto}.tag{color:#76e2c1;font-size:12px;font-weight:800;letter-spacing:.15em}h1{font-size:clamp(27px,6vw,40px);margin:8px 0}p{color:#a9bad2;line-height:1.5}.card{background:#17243a;border:1px solid #30415e;border-radius:14px;padding:17px;margin:15px 0}.drop{border:2px dashed #506789;border-radius:12px;padding:25px;text-align:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px}.cell{background:#0c1526;border-radius:9px;padding:12px;overflow-wrap:anywhere}.k{font-size:12px;color:#9fb1cc}.v{font-weight:700;margin-top:4px}.green{color:#76e2c1}.yellow{color:#ffd27c}button{border:0;border-radius:8px;padding:11px 14px;margin:5px 5px 0 0;background:#76e2c1;color:#071b17;font-weight:800}button.alt{background:#30415e;color:#fff}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;color:#b8f5dc;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;text-align:left;border-bottom:1px solid #30415e}th{color:#9fb1cc}footer{text-align:center;color:#8496b1;font-size:12px;padding:15px}
+</style></head>
+<body><main>
+<div class="tag">PROJECT-GPT · LAB 003</div><h1>Game File Detective</h1>
+<p>Um pequeno detetive de arquivos para investigar assets de jogos, arquivos PAK, WAD, imagens, áudio e executáveis. Útil antes de tentar extrair ou converter arquivos de um port.</p>
+<section class="card"><div class="drop"><b>Escolha ou solte um arquivo aqui</b><p>O arquivo fica no seu aparelho; nada é enviado.</p><input id="file" type="file"></div><p id="status">Aguardando arquivo…</p></section>
+<section id="out" style="display:none">
+<div class="card"><h2>Identificação</h2><div class="grid" id="facts"></div></div>
+<div class="card"><h2>Assinatura e primeiros bytes</h2><pre id="hex"></pre></div>
+<div class="card"><h2>Textos encontrados</h2><p>Sequências ASCII legíveis encontradas no começo do arquivo (até 1 MiB).</p><pre id="strings"></pre></div>
+<div class="card"><h2>Possíveis formatos</h2><div id="hints"></div></div>
+<div class="card"><button id="save">Baixar relatório TXT</button><button class="alt" id="copy">Copiar relatório</button><button class="alt" id="reset">Limpar</button></div>
+</section>
+<footer>Project-GPT · Lab 003 · Análise local no navegador</footer></main>
+<script>
+const $=id=>document.getElementById(id);let report='';
+const signatures=[
+{n:'ZIP / APK / alguns pacotes',b:[0x50,0x4b,0x03,0x04],why:'Contêiner ZIP; alguns formatos de pacote usam ZIP.'},
+{n:'ZIP vazio ou finalizado',b:[0x50,0x4b,0x05,0x06],why:'Assinatura de diretório central ZIP.'},
+{n:'PNG',b:[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a],why:'Imagem PNG.'},
+{n:'JPEG',b:[0xff,0xd8,0xff],why:'Imagem JPEG.'},
+{n:'GIF',b:[0x47,0x49,0x46,0x38],why:'Imagem GIF.'},
+{n:'Ogg / áudio',b:[0x4f,0x67,0x67,0x53],why:'Contêiner Ogg; pode conter Vorbis ou Opus.'},
+{n:'WAVE',b:[0x52,0x49,0x46,0x46],why:'RIFF; confira se aparece WAVE no offset 8.'},
+{n:'WAD Doom',b:[0x49,0x57,0x41,0x44],why:'Cabeçalho IWAD. PWAD começa com PWAD.'},
+{n:'WAD Doom (PWAD)',b:[0x50,0x57,0x41,0x44],why:'Pacote de dados PWAD.'},
+{n:'ELF',b:[0x7f,0x45,0x4c,0x46],why:'Executável ou objeto ELF; arquitetura precisa ser lida no cabeçalho.'},
+{n:'Unity bundle (assinatura UnityFS)',s:'UnityFS',why:'Possível AssetBundle UnityFS.'},
+{n:'Quake PACK',s:'PACK',why:'Possível arquivo PACK de Quake; cabeçalho normalmente contém diretório.'},
+{n:'Valve VPK',s:' VPK',why:'Texto VPK pode aparecer em cabeçalho ou conteúdo; confirme estrutura.'}
+];
+function cell(k,v){return '<div class="cell"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'}
+function analyze(file,buf){
+ const a=new Uint8Array(buf),n=Math.min(a.length,1048576),head=a.slice(0,Math.min(128,a.length));
+ const hexLines=[];for(let i=0;i<head.length;i+=16){let part=head.slice(i,i+16),h=Array.from(part,x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47,' '),txt=Array.from(part,x=>x>=32&&x<=126?String.fromCharCode(x):'.').join('');hexLines.push(i.toString(16).padStart(8,'0')+'  '+h+'  '+txt)}
+ let found=signatures.filter(s=>s.b?s.b.every((v,i)=>a[i]===v):new TextDecoder('ascii').decode(a.slice(0,Math.min(128,a.length))).includes(s.s));
+ if(a.length>=12&&String.fromCharCode(...a.slice(0,4))==='RIFF'&&String.fromCharCode(...a.slice(8,12))==='WAVE')found=found.map(x=>x.n==='WAVE'?{...x,n:'WAVE áudio',why:'Arquivo de áudio RIFF/WAVE.'}:x);
+ let strings=[],cur='',start=0;for(let i=0;i<n;i++){let c=a[i];if(c>=32&&c<=126){if(!cur)start=i;cur+=String.fromCharCode(c)}else{if(cur.length>=5)strings.push(start.toString(16).padStart(8,'0')+'  '+cur);cur=''}}if(cur.length>=5)strings.push(start.toString(16).padStart(8,'0')+'  '+cur);
+ let label=found.length?found.map(x=>x.n).join(' / '):'Desconhecido — pode ser formato proprietário';
+ $('facts').innerHTML=[['Arquivo',file.name],['Tamanho',file.size.toLocaleString('pt-BR')+' bytes'],['Tipo do navegador',file.type||'Não identificado'],['Bytes analisados',n.toLocaleString('pt-BR')],['Assinatura',found.length?'Possível correspondência':'Sem assinatura conhecida']].map(x=>cell(...x)).join('');
+ $('hex').textContent=hexLines.join('\n')||'Arquivo vazio';
+ $('strings').textContent=strings.slice(0,70).join('\n')||'Nenhuma sequência ASCII longa encontrada.';
+ $('hints').innerHTML=found.length?found.map(x=>'<div class="cell" style="margin:8px 0"><b class="green">'+x.n+'</b><p>'+x.why+'</p></div>').join(''):'<p class="yellow">Não reconheci uma assinatura conhecida. Isso não significa que o arquivo esteja danificado: muitos jogos usam formatos próprios.</p>';
+ report='GAME FILE DETECTIVE — PROJECT-GPT\nArquivo: '+file.name+'\nTamanho: '+file.size+' bytes\nMIME: '+(file.type||'desconhecido')+'\nIdentificação: '+label+'\n\nPRIMEIROS BYTES\n'+hexLines.join('\n')+'\n\nTEXTOS ASCII\n'+strings.slice(0,70).join('\n')+'\n\nAVISO: identificação por assinatura é preliminar e não garante que o arquivo possa ser extraído ou convertido.';
+ $('out').style.display='block';$('status').textContent='Análise concluída. Confira as pistas abaixo.';
+}
+$('file').onchange=()=>{let f=$('file').files[0];if(!f)return;$('status').textContent='Lendo…';let r=new FileReader();r.onload=()=>analyze(f,r.result);r.onerror=()=>$('status').textContent='Falha ao ler o arquivo.';r.readAsArrayBuffer(f)};
+$('save').onclick=()=>{let a=document.createElement('a'),u=URL.createObjectURL(new Blob([report],{type:'text/plain'}));a.href=u;a.download='game-file-report.txt';a.click();URL.revokeObjectURL(u)};
+$('copy').onclick=()=>{if(report)navigator.clipboard.writeText(report).then(()=>$('status').textContent='Relatório copiado!')};
+$('reset').onclick=()=>{$('file').value='';$('out').style.display='none';$('status').textContent='Aguardando arquivo…';report=''};
+</script></body></html>
