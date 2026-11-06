@@ -22,6 +22,16 @@ Uma ferramenta experimental para identificar cabeçalhos ELF e verificar se o ar
 - **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
 - **Aviso:** identificação preliminar, não garante compatibilidade ou execução no console.
 
+
+
+### Game File Detective — Lab 003
+Ferramenta local para investigar arquivos de jogos: detecta assinaturas comuns (ELF, WAD, ZIP, PNG, Ogg, UnityFS e outras), mostra os primeiros bytes em HEX e procura sequências ASCII.
+
+- **Pasta:** `tools/game-file-detective/`
+- **Entrada:** `tools/game-file-detective/index.html`
+- **Privacidade:** análise local no navegador.
+- **Aviso:** assinaturas são pistas, não garantia de formato ou extração.
+
 ## Como testar
 Abra `tools/bytescope/index.html` no navegador ou publique o repositório com GitHub Pages apontando para a raiz do site (a ferramenta está dentro de `tools/bytescope/`).
 
