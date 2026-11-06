@@ -25,7 +25,7 @@ Uma ferramenta experimental para identificar cabeçalhos ELF e verificar se o ar
 
 
 ### Game File Detective — Lab 003
-Ferramenta local para investigar arquivos de jogos: detecta assinaturas comuns (ELF, WAD, ZIP, PNG, Ogg, UnityFS e outras), mostra os primeiros bytes em HEX e procura sequências ASCII.
+Ferramenta local para investigar arquivos de jogos: detecta assinaturas comuns (ELF, WAD, ZIP, PNG, Ogg, UnityFS e outras), mostra os primeiros bytes em HEX e procura até 70 sequências ASCII nos primeiros 1 MiB.
 
 - **Pasta:** `tools/game-file-detective/`
 - **Entrada:** `tools/game-file-detective/index.html`
@@ -33,7 +33,7 @@ Ferramenta local para investigar arquivos de jogos: detecta assinaturas comuns (
 - **Aviso:** assinaturas são pistas, não garantia de formato ou extração.
 
 ### PAK & Archive Explorer — Lab 004
-Investigador local de contêineres de jogos. Reconhece estruturas Quake PACK e WAD2/WAD3, identifica algumas assinaturas comuns, lista entradas quando o formato é conhecido, procura textos ASCII e exibe uma prévia HEX.
+Investigador local de contêineres de jogos. Reconhece estruturas Quake PACK e WAD2/WAD3, identifica algumas assinaturas comuns, lista entradas quando o formato é conhecido, procura até 250 sequências ASCII nos primeiros 1 MiB e exibe uma prévia HEX.
 
 - **Pasta:** `tools/pak-archive-explorer/`
 - **Entrada:** `tools/pak-archive-explorer/index.html`
