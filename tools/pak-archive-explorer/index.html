@@ -21,7 +21,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091020;border:1px so
 </section>
 <section id="results" class="hidden">
 <div class="panel"><h2>Resumo</h2><div class="grid" id="stats"></div><p id="note"></p></div>
-<div class="panel"><h2>Conteúdo reconhecido</h2><div class="scroll"><table><thead><tr><th>#</th><th>Nome / entrada</th><th>Offset</th><th>Tamanho</th></tr></thead><tbody id="entries"></tbody></table></div><p id="entryNote"></p></div>
+<div class="panel"><h2>Conteúdo reconhecido</h2><div class="scroll"><table><thead><tr><th>#</th><th>Nome / entrada</th><th>Offset</th><th>Tamanho</th><th>Validação</th></tr></thead><tbody id="entries"></tbody></table></div><p id="entryNote"></p></div>
 <div class="panel"><h2>Textos encontrados</h2><pre id="strings">—</pre></div>
 <div class="panel"><h2>Prévia hexadecimal</h2><pre id="hex">—</pre><button id="copy">Copiar HEX</button><button id="report" class="primary">Baixar relatório TXT</button><button id="clear">Limpar</button></div>
 </section>
@@ -44,8 +44,8 @@ function parse(buffer,name){
   format=ascii(0,4)+' (WAD)';const count=u32(v,4),off=u32(v,8);details='Arquivo WAD: tabela de lumps com 32 bytes por entrada.';
   if(count<100000&&off<=b.length&&count*32<=b.length-off){for(let i=0;i<count;i++){let p=off+i*32;entries.push({name:safeName(b.slice(p+16,p+32))||'(sem nome)',offset:u32(v,p),size:u32(v,p+4)});}}
   else details+=' A tabela de lumps parece inválida ou incompleta.';
- } else if(b.length>=4&&ascii(0,4)==='Unity'){
-  format='Unity bundle';details='Assinatura Unity detectada. A versão e a estrutura interna dependem do formato do bundle.';
+ } else if(b.length>=7&&['UnityFS','UnityRaw','UnityWeb'].includes(ascii(0,7))){
+  format=ascii(0,7)+' bundle';details='Assinatura de AssetBundle Unity reconhecida. A estrutura interna e a compressão variam por versão; esta ferramenta não extrai o conteúdo.';
  } else if(b.length>=4&&ascii(0,4)==='PK\x03\x04'){
   format='ZIP';details='Contêiner ZIP detectado. Esta versão identifica a assinatura, mas não lista os arquivos internos.';
  } else if(b.length>=4&&ascii(0,4)==='IWAD'||b.length>=4&&ascii(0,4)==='PWAD'){
@@ -53,15 +53,16 @@ function parse(buffer,name){
  } else if(b.length>=4&&ascii(0,4)==='\x7fELF'){
   format='ELF';details='Executável ELF detectado, não um arquivo de pacote.';
  }
+ entries=entries.map(e=>({...e,valid:e.offset<=b.length&&e.size<=b.length-e.offset}));const invalidEntries=entries.filter(e=>!e.valid).length;if(invalidEntries)details+=' Atenção: '+invalidEntries+' entrada(s) apontam para fora dos limites do arquivo.';
  const strings=[];let run='';for(let i=0;i<b.length;i++){let c=b[i];if(c>=32&&c<=126){run+=String.fromCharCode(c)}else{if(run.length>=5)strings.push(run);run='';}}if(run.length>=5)strings.push(run);
- $('stats').innerHTML='';addStat('Arquivo',name);addStat('Formato',format);addStat('Tamanho',fmt(b.length));addStat('Entradas listadas',String(entries.length));
+ $('stats').innerHTML='';addStat('Arquivo',name);addStat('Formato',format);addStat('Tamanho',fmt(b.length));addStat('Entradas listadas',String(entries.length));addStat('Entradas fora dos limites',String(invalidEntries));
  $('note').textContent=details;
- $('entries').innerHTML='';for(let i=0;i<Math.min(entries.length,500);i++){let e=entries[i],tr=document.createElement('tr');[i+1,e.name,e.offset,fmt(e.size)].forEach(x=>{let td=document.createElement('td');td.textContent=x;tr.append(td)});$('entries').append(tr)}
+ $('entries').innerHTML='';for(let i=0;i<Math.min(entries.length,500);i++){let e=entries[i],tr=document.createElement('tr');[i+1,e.name,e.offset,fmt(e.size),e.valid?'OK':'fora do arquivo'].forEach((x,j)=>{let td=document.createElement('td');td.textContent=x;if(j===4&&!e.valid)td.style.color='#ff9b9b';tr.append(td)});$('entries').append(tr)}
  $('entryNote').textContent=entries.length>500?'Exibindo as primeiras 500 entradas.':entries.length?'Offsets e tamanhos foram lidos do diretório do arquivo.':'Nenhuma lista de entradas disponível para esta assinatura.';
  $('strings').textContent=strings.slice(0,250).join('\n')||'Nenhuma sequência ASCII legível encontrada.';
  let lines=[];for(let i=0;i<Math.min(b.length,512);i+=16){let chunk=b.slice(i,i+16);let hx=[...chunk].map(x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47);let tx=[...chunk].map(x=>x>=32&&x<=126?String.fromCharCode(x):'.').join('');lines.push(i.toString(16).padStart(8,'0')+'  '+hx+'  '+tx)}
  $('hex').textContent=lines.join('\n')||'(arquivo vazio)';
- reportText='PAK & Archive Explorer\nArquivo: '+name+'\nFormato: '+format+'\nTamanho: '+b.length+' bytes\nDetalhes: '+details+'\nEntradas: '+entries.length+'\n\n'+entries.slice(0,500).map((e,i)=>(i+1)+'. '+e.name+' | offset '+e.offset+' | '+e.size+' bytes').join('\n')+'\n\nTextos encontrados:\n'+strings.slice(0,250).join('\n');
+ reportText='PAK & Archive Explorer\nArquivo: '+name+'\nFormato: '+format+'\nTamanho: '+b.length+' bytes\nDetalhes: '+details+'\nEntradas: '+entries.length+'\n\n'+entries.slice(0,500).map((e,i)=>(i+1)+'. '+e.name+' | offset '+e.offset+' | '+e.size+' bytes | '+(e.valid?'OK':'FORA DOS LIMITES')').join('\n')+'\n\nTextos encontrados:\n'+strings.slice(0,250).join('\n');
  current=b;$('results').classList.remove('hidden');$('status').textContent='Análise concluída.';
 }
 function load(file){if(!file)return;$('status').textContent='Lendo '+file.name+'…';const r=new FileReader();r.onload=()=>parse(r.result,file.name);r.onerror=()=>$('status').textContent='Não foi possível ler o arquivo.';r.readAsArrayBuffer(file)}
