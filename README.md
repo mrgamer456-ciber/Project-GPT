@@ -56,7 +56,7 @@ Ferramenta auxiliar para listar o conteúdo de arquivos ZIP locais ou de um link
 - **Entrada:** `tools/zip-extractor/index.html`
 - **Privacidade:** o ZIP é lido no navegador; o conteúdo não é enviado para um servidor.
 - **Dependência:** carrega JSZip 3.10.2 pelo jsDelivr; precisa de internet para abrir a biblioteca.
-- **Limites de segurança/desempenho:** rejeita ZIPs acima de 128 MiB, mais de 5.000 arquivos, um item acima de 128 MiB ou soma declarada acima de 256 MiB. Use arquivos de origem confiável; esses limites não substituem a validação do conteúdo.
+- **Limites de segurança/desempenho:** rejeita ZIPs acima de 128 MiB, mais de 5.000 arquivos, um item com tamanho declarado acima de 128 MiB ou soma declarada acima de 256 MiB. Use arquivos de origem confiável; esses limites não substituem a validação do conteúdo.
 
 ## Experimento de análise — Cross Strike (PS2)
 
