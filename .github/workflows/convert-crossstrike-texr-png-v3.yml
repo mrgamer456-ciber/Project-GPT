@@ -1,0 +1,177 @@
+name: Extract every CrossStrike TEXR texture
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract all indexed textures from TEXR records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet Pillow
+          python3 <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+          import csv, hashlib, struct
+
+          src_root = Path("samples/cross-strike/analysis/extracted")
+          out_root = Path("samples/cross-strike/converted/png-candidates-v3")
+          out_root.mkdir(parents=True, exist_ok=True)
+
+          areas = ("COMMON", "FLAT", "ISLAND", "KASBAH", "OFFSHORE", "SNOWFIELD", "TRAINING")
+          global_header = 0x10
+          record_size = 0x4420
+          palette_rel = 0x20
+          pixels_rel = 0x420
+          width = height = 128
+          pixel_bytes = width * height
+
+          rows = []
+          report = [
+              "# CrossStrike — extraction of all TEXR texture records",
+              "",
+              "This version reads every texture record, not just one fixed slice.",
+              "Record layout inferred from file lengths: 16-byte global header, then fixed 0x4420-byte records.",
+              "Each record: 0x20-byte header, 256 RGBA palette entries at record+0x20, and 128x128 indexed pixels at record+0x420.",
+              "Only original and RGB-brightened previews are generated. Source BIN files are never modified.",
+              "",
+              "| Area | Texture count | Record size | PNGs |",
+              "|---|---:|---:|---:|",
+          ]
+
+          for area in areas:
+              src = src_root / area / "TEXR_01.bin"
+              if not src.is_file():
+                  report.append(f"| {area} | missing | — | 0 |")
+                  continue
+
+              data = src.read_bytes()
+              if len(data) < global_header:
+                  report.append(f"| {area} | invalid header | — | 0 |")
+                  continue
+
+              count = struct.unpack_from("<I", data, 0)[0]
+              expected = global_header + count * record_size
+              if expected != len(data):
+                  report += [
+                      f"## {area}",
+                      f"- ERROR: file size {len(data):,} does not match 16 + {count} × 0x4420 = {expected:,}.",
+                      "- No images generated for this area because the record layout did not validate.",
+                      "",
+                  ]
+                  continue
+
+              area_out = out_root / area
+              area_out.mkdir(parents=True, exist_ok=True)
+              sheet_thumbs = []
+              area_pngs = 0
+
+              for index in range(count):
+                  start = global_header + index * record_size
+                  pal_start = start + palette_rel
+                  pix_start = start + pixels_rel
+                  pal_end = pal_start + 256 * 4
+                  pix_end = pix_start + pixel_bytes
+
+                  if pal_end > start + record_size or pix_end != start + record_size:
+                      raise RuntimeError(f"{area} texture {index:03d}: record boundaries failed")
+
+                  palette = [tuple(data[p:p+4]) for p in range(pal_start, pal_end, 4)]
+                  indices = data[pix_start:pix_end]
+                  rgba = [palette[value] for value in indices]
+
+                  original = Image.new("RGBA", (width, height))
+                  original.putdata(rgba)
+                  bright = Image.new("RGBA", (width, height))
+                  bright.putdata([
+                      (min(255, round(r * 1.18)),
+                       min(255, round(g * 1.18)),
+                       min(255, round(b * 1.18)), a)
+                      for r, g, b, a in rgba
+                  ])
+
+                  for variant, image in (("original", original), ("bright_rgb", bright)):
+                      filename = f"{area}_TEXR_{index+1:03d}_{variant}.png"
+                      target = area_out / filename
+                      image.save(target, format="PNG", optimize=True)
+                      rows.append([
+                          area, index + 1, f"0x{start:08x}", f"0x{pal_start:08x}",
+                          f"0x{pix_start:08x}", width, height, variant, f"{area}/{filename}",
+                          target.stat().st_size
+                      ])
+                      area_pngs += 1
+
+                  thumb = original.convert("RGBA")
+                  thumb.thumbnail((96, 96))
+                  sheet_thumbs.append((index + 1, thumb.copy()))
+
+              # One labeled contact sheet per area for quick browsing on mobile.
+              columns = 8
+              cell_w, cell_h = 112, 120
+              rows_count = (len(sheet_thumbs) + columns - 1) // columns
+              sheet = Image.new("RGB", (columns * cell_w, rows_count * cell_h), (36, 36, 36))
+              draw = ImageDraw.Draw(sheet)
+              for n, (texture_no, thumb) in enumerate(sheet_thumbs):
+                  x = (n % columns) * cell_w
+                  y = (n // columns) * cell_h
+                  sheet.paste(thumb.convert("RGB"), (x + 8, y + 4))
+                  draw.text((x + 8, y + 102), f"Texture {texture_no:03d}", fill=(255, 255, 255))
+              sheet_path = area_out / f"{area}_contact_sheet.jpg"
+              sheet.save(sheet_path, quality=88, optimize=True)
+
+              report += [
+                  f"## {area}",
+                  f"- TEXR size: {len(data):,} bytes",
+                  f"- Texture count in header: {count}",
+                  f"- Record size validated: 0x{record_size:04X} ({record_size:,} bytes)",
+                  f"- SHA-256: {hashlib.sha256(data).hexdigest()}",
+                  f"- PNG previews: {area_pngs} (original + bright_rgb for each texture)",
+                  f"- [Open contact sheet]({area}/{sheet_path.name})",
+                  "",
+              ]
+
+          if not rows:
+              raise SystemExit("No texture records were extracted.")
+
+          with (out_root / "index.csv").open("w", newline="", encoding="utf-8") as handle:
+              writer = csv.writer(handle)
+              writer.writerow([
+                  "area", "texture_number", "record_offset", "palette_offset",
+                  "pixel_offset", "width", "height", "variant", "png", "png_bytes"
+              ])
+              writer.writerows(rows)
+
+          (out_root / "README.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+          print("\n".join(report))
+          print(f"Generated {len(rows)} PNG previews from {len(rows)//2} texture records.")
+          PY
+
+      - name: Commit extracted texture previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/converted/png-candidates-v3
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Extract every CrossStrike TEXR texture record"
+            git push
+          fi
+
+      - name: Upload texture previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-all-TEXR-textures-v3
+          path: samples/cross-strike/converted/png-candidates-v3/
+          if-no-files-found: error
+          retention-days: 14
