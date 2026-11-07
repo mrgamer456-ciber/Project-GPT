@@ -84,12 +84,16 @@ jobs:
 
                   variants = {
                       "original": base,
-                      "bright_rgb": base.point(
-                          lambda value: min(255, round(value * 1.18))
-                          if value <= 255 else 255
-                      ),
+                      "bright_rgb": Image.new("RGBA", (size, size)),
                       "opaque": Image.new("RGBA", (size, size)),
                   }
+                  # Brighten RGB only; keep the original transparency unchanged.
+                  variants["bright_rgb"].putdata([
+                      (min(255, round(r * 1.18)),
+                       min(255, round(g * 1.18)),
+                       min(255, round(b * 1.18)), a)
+                      for r, g, b, a in rgba
+                  ])
                   # Preserve RGB while making alpha fully opaque for comparison.
                   variants["opaque"].putdata([(r, g, b, 255) for r, g, b, a in rgba])
 
