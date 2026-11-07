@@ -10,20 +10,24 @@ jobs:
   extract:
     runs-on: ubuntu-latest
     steps:
-      - name: Download CrossStrike ZIP
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download and extract CrossStrike
+        shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p extracted
           curl -fL --retry 3 \
             "https://raw.githubusercontent.com/mrgamer456-ciber/Project-GPT/main/samples/cross-strike/CrossStrike_PS2.zip" \
-            -o CrossStrike_PS2.zip
-
-      - name: Extract ZIP
-        run: |
-          mkdir -p extracted
-          unzip -q CrossStrike_PS2.zip -d extracted
+            -o /tmp/CrossStrike_PS2.zip
+          unzip -q /tmp/CrossStrike_PS2.zip -d extracted
           echo "Arquivos extraídos:"
           find extracted -type f -printf '%P (%s bytes)\n' | sort
+          echo "Arquivos ELF e PAK encontrados:"
+          find extracted -type f \( -iname 'MAIN.elf' -o -iname '*.pak' \) -print
 
-      - name: Upload extracted files as artifact
+      - name: Upload extracted files
         uses: actions/upload-artifact@v4
         with:
           name: CrossStrike-PS2-extraido
