@@ -1,0 +1,144 @@
+name: Build one combined CrossStrike PAK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Combine all seven PAKs without dropping sections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import struct, hashlib, csv
+
+          assets = Path("samples/cross-strike/PS2/ASSETS")
+          outdir = Path("samples/cross-strike/merged")
+          outdir.mkdir(parents=True, exist_ok=True)
+          names = ["COMMON.PAK", "FLAT.PAK", "ISLAND.PAK", "KASBAH.PAK",
+                   "OFFSHORE.PAK", "SNOWFIELD.PAK", "TRAINING.PAK"]
+          sections = []
+          source_rows = []
+
+          for name in names:
+              path = assets / name
+              if not path.is_file():
+                  raise SystemExit(f"Missing source PAK: {path}")
+              blob = path.read_bytes()
+              if len(blob) < 16 or blob[:4] != b"HJK1":
+                  raise SystemExit(f"Invalid HJK1 header: {name}")
+              version, count, reserved = struct.unpack_from("<III", blob, 4)
+              if version != 2 or count > 256 or 16 + count*12 > len(blob):
+                  raise SystemExit(f"Unsupported or invalid PAK header: {name}")
+              for i in range(count):
+                  pos = 16 + i*12
+                  tag = blob[pos:pos+4]
+                  off, size = struct.unpack_from("<II", blob, pos+4)
+                  if (not all(32 <= c < 127 for c in tag)
+                      or off < 16+count*12 or off > len(blob)
+                      or size > len(blob)-off):
+                      raise SystemExit(f"Invalid section {name} #{i}")
+                  payload = blob[off:off+size]
+                  sections.append((tag, payload, name, i))
+                  source_rows.append([name, i, tag.decode("ascii"), size,
+                                      hashlib.sha256(payload).hexdigest()])
+
+          if len(sections) > 256:
+              raise SystemExit(f"Too many sections for current parser: {len(sections)}")
+
+          # HJK1 v2 header: magic + version + section count + reserved.
+          # Keep every original 4-byte tag, including repeated tags.
+          table_end = 16 + len(sections)*12
+          cursor = (table_end + 15) & ~15
+          entries = []
+          payload_chunks = []
+          for tag, payload, source, index in sections:
+              offset = cursor
+              entries.append(struct.pack("<4sII", tag, offset, len(payload)))
+              payload_chunks.append((offset, payload))
+              cursor = offset + len(payload)
+              cursor = (cursor + 15) & ~15
+
+          merged = bytearray(cursor)
+          struct.pack_into("<4sIII", merged, 0, b"HJK1", 2, len(sections), 0)
+          merged[16:16+len(entries)*12] = b"".join(entries)
+          for offset, payload in payload_chunks:
+              merged[offset:offset+len(payload)] = payload
+
+          target = outdir / "CROSSSTRIKE_ALL.PAK"
+          target.write_bytes(merged)
+
+          # Re-open and validate the output table and every payload hash.
+          check = target.read_bytes()
+          version, count, _ = struct.unpack_from("<III", check, 4)
+          if check[:4] != b"HJK1" or version != 2 or count != len(sections):
+              raise SystemExit("Merged PAK header validation failed")
+          for i, (tag, payload, source, original_index) in enumerate(sections):
+              pos = 16+i*12
+              tag2 = check[pos:pos+4]
+              off2, size2 = struct.unpack_from("<II", check, pos+4)
+              if tag2 != tag or size2 != len(payload) or check[off2:off2+size2] != payload:
+                  raise SystemExit(f"Output validation failed at section {i} ({source} #{original_index})")
+
+          with (outdir / "source-manifest.csv").open("w", newline="") as f:
+              w = csv.writer(f)
+              w.writerow(["source_pak", "source_index", "tag", "size", "sha256"])
+              w.writerows(source_rows)
+
+          tag_counts = {}
+          for tag, *_ in sections:
+              key = tag.decode("ascii")
+              tag_counts[key] = tag_counts.get(key, 0)+1
+          summary = [
+              "# Combined CrossStrike PAK",
+              "",
+              "- Output: `CROSSSTRIKE_ALL.PAK`",
+              "- Format: HJK1 version 2",
+              f"- Source PAKs: {len(names)}",
+              f"- Combined sections: {len(sections)}",
+              f"- Output size: {len(merged):,} bytes",
+              "- All section payloads were byte-for-byte validated against the seven source PAKs.",
+              "- Repeated 4-byte section tags were preserved; no sections were discarded.",
+              "",
+              "## Important compatibility note",
+              "",
+              "This is an experimental all-in-one archive. The existing game code requests COMMON.PAK and map-specific PAK files separately. A combined archive is NOT confirmed loadable by the current game until the PAK loader and asset lookup are changed to select sections by source/map. Keep the original seven PAKs unchanged.",
+              "",
+              "## Section tag counts",
+              ""
+          ]
+          summary += [f"- {tag}: {count}" for tag, count in sorted(tag_counts.items())]
+          (outdir / "README.md").write_text("\n".join(summary)+"\n")
+          print("\n".join(summary))
+          print("SHA-256:", hashlib.sha256(merged).hexdigest())
+          PY
+
+      - name: Commit combined archive and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/merged
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Build experimental combined CrossStrike PAK"
+            git push
+          fi
+
+      - name: Upload combined PAK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-all-in-one-PAK
+          path: samples/cross-strike/merged/
+          if-no-files-found: error
+          retention-days: 14
