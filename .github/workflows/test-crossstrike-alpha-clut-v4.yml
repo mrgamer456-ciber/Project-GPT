@@ -1,0 +1,140 @@
+name: Test CrossStrike PS2 alpha and CLUT corrections
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate non-destructive comparison previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet Pillow
+          python3 <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+          import csv, struct
+
+          src_root = Path("samples/cross-strike/analysis/extracted")
+          out_root = Path("samples/cross-strike/converted/alpha-clut-test-v4")
+          areas = ("COMMON", "FLAT", "ISLAND", "KASBAH", "OFFSHORE", "SNOWFIELD", "TRAINING")
+          GLOBAL, RECORD = 0x10, 0x4420
+          PALETTE_REL, PIXELS_REL = 0x10, 0x410
+          W = H = 128
+          N = W * H
+          out_root.mkdir(parents=True, exist_ok=True)
+          rows = []
+
+          def csm1_reorder(palette):
+              # PS2 GS CSM1 8-bit CLUT ordering: exchange entries 8..15 and 16..23
+              # within each 32-entry group. Keep this as a test candidate, not an assumption.
+              result = list(palette)
+              for base in range(0, 256, 32):
+                  result[base+8:base+16] = palette[base+16:base+24]
+                  result[base+16:base+24] = palette[base+8:base+16]
+              return result
+
+          for area in areas:
+              src = src_root / area / "TEXR_01.bin"
+              if not src.exists():
+                  continue
+              data = src.read_bytes()
+              count = struct.unpack_from("<I", data, 0)[0]
+              if len(data) != GLOBAL + count * RECORD:
+                  raise RuntimeError(f"{area}: unexpected TEXR size")
+              area_dir = out_root / area
+              area_dir.mkdir(parents=True, exist_ok=True)
+              sheet_items = []
+              for i in range(count):
+                  start = GLOBAL + i * RECORD
+                  p0 = start + PALETTE_REL
+                  x0 = start + PIXELS_REL
+                  palette = [tuple(data[p:p+4]) for p in range(p0, p0+1024, 4)]
+                  indices = data[x0:x0+N]
+                  if len(indices) != N:
+                      raise RuntimeError(f"{area} texture {i+1}: short pixel data")
+
+                  pal_clut = csm1_reorder(palette)
+                  variants = (
+                      ("current", palette, False),
+                      ("alpha2x", palette, True),
+                      ("clut_csm1", pal_clut, False),
+                      ("alpha2x_csm1", pal_clut, True),
+                  )
+                  thumbs = []
+                  for name, pal, fix_alpha in variants:
+                      colors = []
+                      for idx in indices:
+                          r, g, b, a = pal[idx]
+                          if fix_alpha:
+                              a = min(255, a * 2)
+                          colors.append((r, g, b, a))
+                      im = Image.new("RGBA", (W, H))
+                      im.putdata(colors)
+                      filename = f"{area}_TEXR_{i+1:03d}_{name}.png"
+                      im.save(area_dir / filename, optimize=True)
+                      rows.append([area, i+1, name, f"{area}/{filename}"])
+                      if i < min(count, 16):
+                          thumb = im.convert("RGB")
+                          thumb.thumbnail((128, 128))
+                          thumbs.append((name, thumb.copy()))
+                  if i < min(count, 16):
+                      sheet_items.append((i+1, thumbs))
+
+              cell_w, cell_h = 142, 160
+              sheet = Image.new("RGB", (4*cell_w, 16*cell_h), (40,40,40))
+              draw = ImageDraw.Draw(sheet)
+              for tex_no, thumbs in sheet_items:
+                  y = (tex_no-1)*cell_h
+                  for j, (label, thumb) in enumerate(thumbs):
+                      x = j*cell_w
+                      sheet.paste(thumb, (x+7, y+5))
+                      draw.text((x+7, y+137), label, fill=(255,255,255))
+                      draw.text((x+7, y+150), f"Texture {tex_no:03d}", fill=(190,190,190))
+              sheet.save(area_dir / f"{area}_comparison_first16.jpg", quality=90, optimize=True)
+
+          with (out_root / "index.csv").open("w", newline="", encoding="utf-8") as f:
+              w = csv.writer(f)
+              w.writerow(["area", "texture_number", "variant", "png"])
+              w.writerows(rows)
+
+          readme = """# CrossStrike alpha / CLUT comparison (non-destructive)
+
+          Four PNG candidates are generated for every TEXR record:
+          - current: same palette and alpha interpretation as the original exporter.
+          - alpha2x: PS2 GS alpha 0..128 mapped to PNG alpha 0..255.
+          - clut_csm1: tests the PS2 GS CSM1 8-bit CLUT entry ordering (swap 8..15 with 16..23 in each 32-entry group).
+          - alpha2x_csm1: applies both tests.
+
+          These are comparison candidates only. No original BIN or existing PNG is overwritten.
+          Each area's comparison_first16.jpg compares the first 16 records, with variants in columns.
+          """
+          (out_root / "README.md").write_text(readme, encoding="utf-8")
+          print(f"Generated {len(rows)} comparison PNGs across {len(areas)} areas.")
+          PY
+      - name: Commit comparison previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/converted/alpha-clut-test-v4
+          if git diff --cached --quiet; then
+            echo "No comparison changes."
+          else
+            git commit -m "Add CrossStrike alpha and CLUT comparison previews"
+            git push
+          fi
+      - name: Upload comparison previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-alpha-clut-test-v4
+          path: samples/cross-strike/converted/alpha-clut-test-v4/
+          if-no-files-found: error
+          retention-days: 14
