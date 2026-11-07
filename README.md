@@ -49,7 +49,7 @@ Ferramenta local para inspecionar arquivos de textura TIM2 do PlayStation 2. Lê
 - **Limites:** não decodifica pixels, não converte para PNG e não valida completamente swizzling, alinhamento GS ou paletas. A validação estrutural é preliminar.
 
 ## Abrir as ferramentas
-A página inicial do laboratório está em [index.html](index.html) e reúne os quatro experimentos. Cada ferramenta também pode ser baixada como um arquivo `index.html` e aberta localmente em um navegador moderno.
+A página inicial do laboratório está em [index.html](index.html) e reúne os cinco laboratórios. Cada ferramenta também pode ser baixada como um arquivo `index.html` e aberta localmente em um navegador moderno.
 
 O repositório está preparado com caminhos relativos para hospedagem estática, mas **GitHub Pages não foi ativado** nesta revisão. Se quiser publicar o site, habilite Pages manualmente nas configurações do repositório, usando a branch `main` e a raiz (`/`).
 
