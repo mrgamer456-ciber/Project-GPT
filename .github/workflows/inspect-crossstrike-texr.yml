@@ -49,8 +49,8 @@ jobs:
           def export_embedded(data, pak, base):
               found = []
               signatures = [
-                  ("png", b"\\x89PNG\\r\\n\\x1a\\n"),
-                  ("jpg", b"\\xff\\xd8\\xff"),
+                  ("png", b"\x89PNG\r\n\x1a\n"),
+                  ("jpg", b"\xff\xd8\xff"),
                   ("dds", b"DDS "),
                   ("bmp", b"BM"),
               ]
@@ -73,7 +73,7 @@ jobs:
                                   end = cursor
                                   break
                       elif ext == "jpg":
-                          end_marker = data.find(b"\\xff\\xd9", pos + 3)
+                          end_marker = data.find(b"\xff\xd9", pos + 3)
                           if end_marker >= 0:
                               end = end_marker + 2
                       elif ext == "dds":
@@ -81,7 +81,7 @@ jobs:
                               height, width = struct.unpack_from("<II", data, pos + 12)
                               if 0 < width <= 8192 and 0 < height <= 8192:
                                   fourcc = data[pos+84:pos+88]
-                                  if fourcc in (b"DXT1", b"DXT3", b"DXT5", b"ATI1", b"ATI2") or fourcc == b"\\x00\\x00\\x00\\x00":
+                                  if fourcc in (b"DXT1", b"DXT3", b"DXT5", b"ATI1", b"ATI2") or fourcc == b"\x00\x00\x00\x00":
                                       # DDS length is not safely inferable for every pixel format.
                                       # Export only the header-sized candidate for inspection, not as a claimed complete image.
                                       end = pos + 128
@@ -137,8 +137,8 @@ jobs:
               w.writerow(["pak", "source_bin", "size", "sha256", "untouched_copy", "detected_images"])
               w.writerows(rows)
 
-          (output_root / "texr-inspection.md").write_text("\\n".join(report) + "\\n", encoding="utf-8")
-          print("\\n".join(report))
+          (output_root / "texr-inspection.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+          print("\n".join(report))
           print(f"Blocos TEXR examinados: {len(rows)}")
           PY
 
