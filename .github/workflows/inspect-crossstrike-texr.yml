@@ -1,0 +1,165 @@
+name: Inspect CrossStrike TEXR Textures
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inspect-textures:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Inspect TEXR sections and preserve original copies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import csv, hashlib, math, struct
+
+          source_root = Path("samples/cross-strike/analysis/extracted")
+          output_root = Path("samples/cross-strike/converted")
+          copies = output_root / "original-bin-copies"
+          images = output_root / "detected-images"
+          copies.mkdir(parents=True, exist_ok=True)
+          images.mkdir(parents=True, exist_ok=True)
+
+          report = [
+              "# CrossStrike TEXR inspection",
+              "",
+              "Este relatório investiga os blocos TEXR sem alterar os BIN originais.",
+              "As cópias BIN são byte a byte. Imagens só são exportadas quando uma assinatura de formato conhecido é encontrada.",
+              "",
+          ]
+          rows = []
+
+          def entropy(data):
+              if not data:
+                  return 0.0
+              counts = [0] * 256
+              for b in data:
+                  counts[b] += 1
+              n = len(data)
+              return -sum((c/n) * math.log2(c/n) for c in counts if c)
+
+          def export_embedded(data, pak, base):
+              found = []
+              signatures = [
+                  ("png", b"\\x89PNG\\r\\n\\x1a\\n"),
+                  ("jpg", b"\\xff\\xd8\\xff"),
+                  ("dds", b"DDS "),
+                  ("bmp", b"BM"),
+              ]
+              for ext, sig in signatures:
+                  start = 0
+                  while True:
+                      pos = data.find(sig, start)
+                      if pos < 0:
+                          break
+                      end = None
+                      if ext == "png":
+                          cursor = pos + 8
+                          while cursor + 12 <= len(data):
+                              chunk_len = struct.unpack_from(">I", data, cursor)[0]
+                              chunk_type = data[cursor+4:cursor+8]
+                              cursor += 12 + chunk_len
+                              if cursor > len(data):
+                                  break
+                              if chunk_type == b"IEND":
+                                  end = cursor
+                                  break
+                      elif ext == "jpg":
+                          end_marker = data.find(b"\\xff\\xd9", pos + 3)
+                          if end_marker >= 0:
+                              end = end_marker + 2
+                      elif ext == "dds":
+                          if pos + 128 <= len(data):
+                              height, width = struct.unpack_from("<II", data, pos + 12)
+                              if 0 < width <= 8192 and 0 < height <= 8192:
+                                  fourcc = data[pos+84:pos+88]
+                                  if fourcc in (b"DXT1", b"DXT3", b"DXT5", b"ATI1", b"ATI2") or fourcc == b"\\x00\\x00\\x00\\x00":
+                                      # DDS length is not safely inferable for every pixel format.
+                                      # Export only the header-sized candidate for inspection, not as a claimed complete image.
+                                      end = pos + 128
+                      elif ext == "bmp" and pos + 14 <= len(data):
+                          declared = struct.unpack_from("<I", data, pos + 2)[0]
+                          if 54 <= declared <= len(data) - pos:
+                              end = pos + declared
+                      if end and end > pos:
+                          payload = data[pos:end]
+                          name = f"{pak}_{base}_{ext}_{pos:08x}.{ext}"
+                          (images / name).write_bytes(payload)
+                          found.append((ext, pos, len(payload), name))
+                          start = end
+                      else:
+                          start = pos + len(sig)
+              return found
+
+          for pak_dir in sorted(source_root.iterdir()):
+              if not pak_dir.is_dir():
+                  continue
+              for src in sorted(pak_dir.glob("TEXR_*.bin")):
+                  data = src.read_bytes()
+                  pak = pak_dir.name
+                  copy_name = f"{pak}_{src.name}"
+                  copy_path = copies / copy_name
+                  copy_path.write_bytes(data)
+                  sha = hashlib.sha256(data).hexdigest()
+                  found = export_embedded(data, pak, src.stem)
+
+                  report += [
+                      f"## {pak} / {src.name}",
+                      f"- Tamanho: {len(data)} bytes",
+                      f"- SHA-256: `{sha}`",
+                      f"- Entropia: {entropy(data):.4f} bits/byte",
+                      f"- Primeiros 128 bytes: `{data[:128].hex(' ')}`",
+                      f"- Strings ASCII: {sum(1 for b in data if 32 <= b < 127)} bytes imprimíveis (contagem simples)",
+                      f"- Cópia original: `{copy_path.as_posix()}`",
+                      f"- Imagens embutidas reconhecidas: {len(found)}",
+                  ]
+                  if found:
+                      for ext, pos, size, name in found:
+                          report.append(f"  - {ext.upper()} em 0x{pos:x}, {size} bytes: `{name}`")
+                  else:
+                      report.append("- Nenhuma assinatura PNG/JPEG/DDS/BMP completa reconhecida.")
+                  report.append("")
+                  rows.append([pak, src.name, len(data), sha, copy_path.as_posix(), len(found)])
+
+          if not rows:
+              raise SystemExit("Nenhum TEXR_*.bin foi encontrado em analysis/extracted.")
+
+          with (output_root / "texr-inspection.csv").open("w", newline="", encoding="utf-8") as f:
+              w = csv.writer(f)
+              w.writerow(["pak", "source_bin", "size", "sha256", "untouched_copy", "detected_images"])
+              w.writerows(rows)
+
+          (output_root / "texr-inspection.md").write_text("\\n".join(report) + "\\n", encoding="utf-8")
+          print("\\n".join(report))
+          print(f"Blocos TEXR examinados: {len(rows)}")
+          PY
+
+      - name: Commit inspection results
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/converted
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração para salvar."
+          else
+            git commit -m "Inspect CrossStrike TEXR texture sections"
+            git push
+          fi
+
+      - name: Upload TEXR inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-TEXR-inspection
+          path: samples/cross-strike/converted/
+          if-no-files-found: error
+          retention-days: 14
