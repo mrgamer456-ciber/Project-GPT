@@ -29,8 +29,8 @@ jobs:
           areas = ("COMMON", "FLAT", "ISLAND", "KASBAH", "OFFSHORE", "SNOWFIELD", "TRAINING")
           global_header = 0x10
           record_size = 0x4420
-          palette_rel = 0x20
-          pixels_rel = 0x420
+          palette_rel = 0x10
+          pixels_rel = 0x410
           width = height = 128
           pixel_bytes = width * height
 
@@ -40,7 +40,7 @@ jobs:
               "",
               "This version reads every texture record, not just one fixed slice.",
               "Record layout inferred from file lengths: 16-byte global header, then fixed 0x4420-byte records.",
-              "Each record: 0x20-byte header, 256 RGBA palette entries at record+0x20, and 128x128 indexed pixels at record+0x420.",
+              "Each record: 0x10-byte header, 256 RGBA palette entries at record+0x10, 128x128 indexed pixels at record+0x410, and 0x10 bytes of record padding.",
               "Only original and RGB-brightened previews are generated. Source BIN files are never modified.",
               "",
               "| Area | Texture count | Record size | PNGs |",
