@@ -105,8 +105,8 @@ jobs:
               "- This verifies archive structure and payload integrity, not compatibility with the game's runtime loader.",
               "", "## Result", "", "**PASS — all 105 sections matched their original BIN data.**"
           ]
-          (root / "merged" / "EXTRACTION-VERIFICATION.md").write_text("\\n".join(summary) + "\\n")
-          print("\\n".join(summary))
+          (root / "merged" / "EXTRACTION-VERIFICATION.md").write_text("\n".join(summary) + "\\n")
+          print("\n".join(summary))
           PY
 
       - name: Commit extracted BIN files and verification report
