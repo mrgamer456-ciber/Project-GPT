@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   extract:
@@ -12,26 +12,49 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download and extract CrossStrike
+      - name: Extract ZIP into samples/cross-strike
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p extracted
-          curl -fL --retry 3 \
-            "https://raw.githubusercontent.com/mrgamer456-ciber/Project-GPT/main/samples/cross-strike/CrossStrike_PS2.zip" \
-            -o /tmp/CrossStrike_PS2.zip
-          unzip -q /tmp/CrossStrike_PS2.zip -d extracted
-          echo "Arquivos extraídos:"
-          find extracted -type f -printf '%P (%s bytes)\n' | sort
-          echo "Arquivos ELF e PAK encontrados:"
-          find extracted -type f \( -iname 'MAIN.elf' -o -iname '*.pak' \) -print
+          mkdir -p /tmp/crossstrike
+          unzip -q samples/cross-strike/CrossStrike_PS2.zip -d /tmp/crossstrike
 
-      - name: Upload extracted files
+          PS2_DIR="$(find /tmp/crossstrike -type d -name PS2 -print -quit)"
+          if [ -z "$PS2_DIR" ]; then
+            echo "Pasta PS2 não encontrada dentro do ZIP."
+            exit 1
+          fi
+
+          DEST="samples/cross-strike/PS2"
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          cp -a "$PS2_DIR/." "$DEST/"
+
+          echo "Arquivos publicados no repositório:"
+          find "$DEST" -type f -printf '%P (%s bytes)\n' | sort
+
+      - name: Commit extracted files to repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/PS2
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração: os arquivos já estão atualizados."
+          else
+            git commit -m "Add extracted CrossStrike PS2 files"
+            git push
+          fi
+
+      - name: Upload extracted files as backup artifact
         uses: actions/upload-artifact@v4
         with:
           name: CrossStrike-PS2-extraido
-          path: extracted/
+          path: samples/cross-strike/PS2/
           if-no-files-found: error
           compression-level: 0
           retention-days: 7
