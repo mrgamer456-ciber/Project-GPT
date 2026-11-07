@@ -48,8 +48,17 @@ Ferramenta local para inspecionar arquivos de textura TIM2 do PlayStation 2. Lê
 - **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
 - **Limites:** não decodifica pixels, não converte para PNG e não valida completamente swizzling, alinhamento GS ou paletas. A validação estrutural é preliminar.
 
+### Utilitário — ZIP Extractor
+Ferramenta auxiliar para listar o conteúdo de arquivos ZIP locais ou de um link direto e baixar itens individualmente.
+
+- **Pasta:** `tools/zip-extractor/`
+- **Entrada:** `tools/zip-extractor/index.html`
+- **Privacidade:** o ZIP é lido no navegador; o conteúdo não é enviado para um servidor.
+- **Dependência:** carrega JSZip 3.10.1 pelo jsDelivr; precisa de internet para abrir a biblioteca.
+- **Limite:** não cria uma pasta extraída completa. Arquivos ZIP muito grandes ou com milhares de entradas podem consumir bastante memória; prefira amostras confiáveis e pequenas.
+
 ## Abrir as ferramentas
-A página inicial do laboratório está em [index.html](index.html) e reúne os cinco laboratórios. Cada ferramenta também pode ser baixada como um arquivo `index.html` e aberta localmente em um navegador moderno.
+A página inicial está em [index.html](index.html) e reúne os cinco laboratórios e o utilitário ZIP Extractor. Cada ferramenta também pode ser baixada como um arquivo `index.html` e aberta localmente em um navegador moderno.
 
 O repositório está preparado com caminhos relativos para hospedagem estática, mas **GitHub Pages não foi ativado** nesta revisão. Se quiser publicar o site, habilite Pages manualmente nas configurações do repositório, usando a branch `main` e a raiz (`/`).
 
