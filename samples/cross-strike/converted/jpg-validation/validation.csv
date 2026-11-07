@@ -1,0 +1,11 @@
+pak,source_bin,candidate,offset,status,details,saved_file
+COMMON,TEXR_01.bin,1,0x1ad2bb,REJEITADO,OSError: Truncated File Read,
+COMMON,TEXR_01.bin,2,0x1ae032,REJEITADO,OSError: Truncated File Read,
+COMMON,TEXR_01.bin,3,0x1ae937,REJEITADO,OSError: Truncated File Read,
+COMMON,TEXR_01.bin,4,0x1aeaca,REJEITADO,OSError: Truncated File Read,
+COMMON,TEXR_01.bin,5,0x1aeecd,REJEITADO,OSError: Truncated File Read,
+OFFSHORE,TEXR_01.bin,1,0x20695b,REJEITADO,OSError: Truncated File Read,
+OFFSHORE,TEXR_01.bin,2,0x2076d2,REJEITADO,OSError: Truncated File Read,
+OFFSHORE,TEXR_01.bin,3,0x207fd7,REJEITADO,OSError: Truncated File Read,
+OFFSHORE,TEXR_01.bin,4,0x20816a,REJEITADO,OSError: Truncated File Read,
+OFFSHORE,TEXR_01.bin,5,0x20856d,REJEITADO,OSError: Truncated File Read,
