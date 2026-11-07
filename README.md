@@ -30,6 +30,7 @@ Ferramenta local para investigar arquivos de jogos: detecta assinaturas comuns (
 - **Pasta:** `tools/game-file-detective/`
 - **Entrada:** `tools/game-file-detective/index.html`
 - **Privacidade:** análise local no navegador.
+- **Desempenho:** lê somente os primeiros 1 MiB, mesmo quando o arquivo é maior.
 - **Aviso:** assinaturas são pistas, não garantia de formato ou extração.
 
 ### PAK & Archive Explorer — Lab 004
@@ -54,7 +55,7 @@ Ferramenta auxiliar para listar o conteúdo de arquivos ZIP locais ou de um link
 - **Pasta:** `tools/zip-extractor/`
 - **Entrada:** `tools/zip-extractor/index.html`
 - **Privacidade:** o ZIP é lido no navegador; o conteúdo não é enviado para um servidor.
-- **Dependência:** carrega JSZip 3.10.1 pelo jsDelivr; precisa de internet para abrir a biblioteca.
+- **Dependência:** carrega JSZip 3.10.2 pelo jsDelivr; precisa de internet para abrir a biblioteca.
 - **Limite:** não cria uma pasta extraída completa. Arquivos ZIP muito grandes ou com milhares de entradas podem consumir bastante memória; prefira amostras confiáveis e pequenas.
 
 ## Experimento de análise — Cross Strike (PS2)
