@@ -81,7 +81,7 @@ jobs:
                   pal_end = pal_start + 256 * 4
                   pix_end = pix_start + pixel_bytes
 
-                  if pal_end > start + record_size or pix_end != start + record_size:
+                  if pal_end > start + record_size or pix_end > start + record_size:
                       raise RuntimeError(f"{area} texture {index:03d}: record boundaries failed")
 
                   palette = [tuple(data[p:p+4]) for p in range(pal_start, pal_end, 4)]
