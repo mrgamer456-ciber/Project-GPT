@@ -90,24 +90,15 @@ jobs:
 
                   original = Image.new("RGBA", (width, height))
                   original.putdata(rgba)
-                  bright = Image.new("RGBA", (width, height))
-                  bright.putdata([
-                      (min(255, round(r * 1.18)),
-                       min(255, round(g * 1.18)),
-                       min(255, round(b * 1.18)), a)
-                      for r, g, b, a in rgba
+                  filename = f"{area}_TEXR_{index+1:03d}.png"
+                  target = area_out / filename
+                  original.save(target, format="PNG", optimize=True)
+                  rows.append([
+                      area, index + 1, f"0x{start:08x}", f"0x{pal_start:08x}",
+                      f"0x{pix_start:08x}", width, height, "original", f"{area}/{filename}",
+                      target.stat().st_size
                   ])
-
-                  for variant, image in (("original", original), ("bright_rgb", bright)):
-                      filename = f"{area}_TEXR_{index+1:03d}_{variant}.png"
-                      target = area_out / filename
-                      image.save(target, format="PNG", optimize=True)
-                      rows.append([
-                          area, index + 1, f"0x{start:08x}", f"0x{pal_start:08x}",
-                          f"0x{pix_start:08x}", width, height, variant, f"{area}/{filename}",
-                          target.stat().st_size
-                      ])
-                      area_pngs += 1
+                  area_pngs += 1
 
                   thumb = original.convert("RGBA")
                   thumb.thumbnail((96, 96))
