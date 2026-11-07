@@ -1,0 +1,120 @@
+name: Compare CrossStrike font and texture records
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare record layouts and generate diagnostic previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet Pillow
+          python3 <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import struct, hashlib, csv, collections
+
+          root = Path("samples/cross-strike/analysis/extracted")
+          out = Path("samples/cross-strike/font-recovery/record-comparison")
+          out.mkdir(parents=True, exist_ok=True)
+          record_size = 0x4420
+          global_size = 0x10
+          files = sorted(root.glob("*/TEXR_01.bin"))
+          rows = []
+
+          def palette_at(rec, rel):
+              b = rec[rel:rel+1024]
+              if len(b) != 1024: return None
+              return [tuple(b[i:i+4]) for i in range(0,1024,4)]
+
+          def save_preview(palette, raw, mode, path):
+              if mode == "8bpp":
+                  idx = list(raw[:16384])
+              else:
+                  idx = []
+                  for v in raw[:8192]:
+                      idx.extend((v & 15, (v >> 4) & 15))
+              if len(idx) < 16384: return
+              rgba = Image.new("RGBA",(128,128))
+              rgba.putdata([palette[i] for i in idx[:16384]])
+              bg = Image.new("RGBA",(128,128),(32,32,32,255))
+              bg.alpha_composite(rgba)
+              bg.resize((512,512), Image.Resampling.NEAREST).convert("RGB").save(path)
+
+          for f in files:
+              data = f.read_bytes()
+              if len(data) < global_size: continue
+              count = struct.unpack_from("<I",data,0)[0]
+              if len(data) != global_size + count*record_size:
+                  rows.append([f.parent.name,count,len(data),"BAD_FILE_SIZE","","","",""])
+                  continue
+              for n in range(min(count,4)):
+                  base = global_size+n*record_size
+                  rec = data[base:base+record_size]
+                  header = rec[:16].hex(" ")
+                  p = palette_at(rec,0x10)
+                  if p is None: continue
+                  for off in (0x410,0x420,0x4D0,0x540):
+                      raw = rec[off:]
+                      for mode in ("8bpp","4bpp"):
+                          if len(raw) < (16384 if mode=="8bpp" else 8192): continue
+                          idx = list(raw[:16384]) if mode=="8bpp" else [z for v in raw[:8192] for z in (v&15,v>>4)]
+                          used = len(set(idx))
+                          alpha = collections.Counter(p[i][3] for i in set(idx))
+                          name = f"{f.parent.name}_rec{n:02d}_off{off:03X}_{mode}.png"
+                          # Save only selected useful candidates: all variants are kept for visual comparison.
+                          save_preview(p,raw,mode,out/name)
+                          rows.append([f.parent.name,n,len(rec),header,hex(off),mode,used,str(alpha.most_common(8))])
+
+          with (out/"record-comparison.csv").open("w",newline="") as fp:
+              w=csv.writer(fp); w.writerow(["area","record_index","record_size","record_header","pixel_offset","mode","distinct_indices","alpha_histogram"]); w.writerows(rows)
+
+          summary = [
+            "# CrossStrike TEXR record comparison",
+            "",
+            "This is a diagnostic only. No source PAK/TEXR files or game assets are modified.",
+            "",
+            f"- TEXR files examined: {len(files)}",
+            f"- Candidate rows: {len(rows)}",
+            "- Records 0–3 in each area were compared.",
+            "- Candidate palette location: record +0x10 (256 RGBA entries).",
+            "- Candidate pixel offsets: +0x410, +0x420, +0x4D0, +0x540.",
+            "- Both indexed 8bpp and packed 4bpp interpretations are previewed.",
+            "- Preview images are composited over dark grey to reveal transparent glyphs.",
+            "- Use record-comparison.csv to compare distinct index counts and alpha histograms.",
+            "",
+            "A candidate is not confirmed merely because it looks brighter; it must also match record structure and produce coherent glyph shapes.",
+            ""
+          ]
+          (out/"README.md").write_text("\n".join(summary))
+          print("\n".join(summary))
+          print("Source hashes:")
+          for f in files: print(f, hashlib.sha256(f.read_bytes()).hexdigest())
+          PY
+      - name: Commit diagnostic comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/font-recovery/record-comparison
+          if git diff --cached --quiet; then
+            echo "No comparison changes."
+          else
+            git commit -m "Compare CrossStrike font and texture record layouts"
+            git push
+          fi
+      - name: Upload comparison artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-font-record-comparison
+          path: samples/cross-strike/font-recovery/record-comparison/
+          if-no-files-found: error
+          retention-days: 14
