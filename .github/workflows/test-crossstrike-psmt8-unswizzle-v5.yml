@@ -1,0 +1,142 @@
+name: Test CrossStrike PS2 PSMT8 unswizzle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate linear vs PS2 PSMT8 unswizzle candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet Pillow
+          python3 <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+          import csv, struct
+
+          src_root = Path("samples/cross-strike/analysis/extracted")
+          out_root = Path("samples/cross-strike/converted/psmt8-unswizzle-test-v5")
+          areas = ("COMMON", "FLAT", "ISLAND", "KASBAH", "OFFSHORE", "SNOWFIELD", "TRAINING")
+          GLOBAL, RECORD = 0x10, 0x4420
+          W = H = 128
+          PIXELS = W * H
+          out_root.mkdir(parents=True, exist_ok=True)
+          rows = []
+
+          def psmt8_source_index(x, y, width):
+              # PS2 GS PSMT8 byte address mapping, adapted from the documented
+              # 8-bit GS unswizzle routine. Returns the source byte for output (x,y).
+              block_location = (y & (~0xF)) * width + (x & (~0xF)) * 2
+              swap_selector = (((y + 2) >> 2) & 1) * 4
+              pos_y = (((y & (~3)) >> 1) + (y & 1)) & 7
+              column_location = pos_y * width * 2 + ((x + swap_selector) & 7) * 4
+              byte_num = ((y >> 1) & 1) + ((x >> 2) & 2)
+              return block_location + column_location + byte_num
+
+          # Verify the mapping is a complete permutation for the dimensions used.
+          address_map = [psmt8_source_index(x, y, W) for y in range(H) for x in range(W)]
+          if len(set(address_map)) != PIXELS or min(address_map) != 0 or max(address_map) != PIXELS - 1:
+              raise RuntimeError("PSMT8 address map is not a complete 128x128 permutation")
+
+          for area in areas:
+              src = src_root / area / "TEXR_01.bin"
+              if not src.is_file():
+                  raise RuntimeError(f"Missing source: {src}")
+              data = src.read_bytes()
+              count = struct.unpack_from("<I", data, 0)[0]
+              if len(data) != GLOBAL + count * RECORD:
+                  raise RuntimeError(f"{area}: TEXR size does not match its record count")
+
+              area_dir = out_root / area
+              area_dir.mkdir(parents=True, exist_ok=True)
+              sheet_rows = []
+              for i in range(count):
+                  start = GLOBAL + i * RECORD
+                  palette_start = start + 0x10
+                  pixels_start = start + 0x410
+                  palette = [tuple(data[p:p+4]) for p in range(palette_start, palette_start + 1024, 4)]
+                  source_pixels = data[pixels_start:pixels_start + PIXELS]
+                  if len(source_pixels) != PIXELS:
+                      raise RuntimeError(f"{area} texture {i+1}: incomplete pixel data")
+
+                  linear = Image.new("RGBA", (W, H))
+                  linear.putdata([palette[v] for v in source_pixels])
+
+                  unswizzled_indices = bytearray(PIXELS)
+                  for y in range(H):
+                      row = y * W
+                      for x in range(W):
+                          unswizzled_indices[row + x] = source_pixels[psmt8_source_index(x, y, W)]
+                  unswizzled = Image.new("RGBA", (W, H))
+                  unswizzled.putdata([palette[v] for v in unswizzled_indices])
+
+                  for variant, image in (("linear", linear), ("psmt8_unswizzled", unswizzled)):
+                      filename = f"{area}_TEXR_{i+1:03d}_{variant}.png"
+                      image.save(area_dir / filename, optimize=True)
+                      rows.append([area, i+1, variant, f"{area}/{filename}"])
+
+                  if i < 16:
+                      sheet_rows.append((i+1, linear.copy(), unswizzled.copy()))
+
+              cell_w, cell_h = 276, 150
+              sheet = Image.new("RGB", (2 * cell_w, max(1, len(sheet_rows)) * cell_h), (38,38,38))
+              draw = ImageDraw.Draw(sheet)
+              for n, (tex_no, left, right) in enumerate(sheet_rows):
+                  y = n * cell_h
+                  for col, (label, im) in enumerate((("LINEAR", left), ("PSMT8 UNSWIZZLED", right))):
+                      x = col * cell_w
+                      im.thumbnail((128,128))
+                      sheet.paste(im.convert("RGB"), (x + 8, y + 4))
+                      draw.text((x + 146, y + 14), f"Texture {tex_no:03d}", fill=(255,255,255))
+                      draw.text((x + 146, y + 34), label, fill=(190,220,255))
+              sheet.save(area_dir / f"{area}_linear_vs_psmt8_first16.jpg", quality=90, optimize=True)
+
+          with (out_root / "index.csv").open("w", newline="", encoding="utf-8") as f:
+              writer = csv.writer(f)
+              writer.writerow(["area", "texture_number", "variant", "png"])
+              writer.writerows(rows)
+
+          readme = """# CrossStrike PSMT8 unswizzle test (V5)
+
+          This is a non-destructive spatial-layout test. For each TEXR texture it creates:
+          - linear: current row-major pixel interpretation.
+          - psmt8_unswizzled: applies the PS2 GS PSMT8 byte-address mapping to the pixel indices.
+
+          Both variants use the exact same palette and alpha bytes. This isolates pixel ordering;
+          no brightness, alpha, palette, source BIN, or existing PNG is changed.
+
+          Each area folder contains a side-by-side JPEG preview of the first 16 textures.
+          The address mapping is checked to be a one-to-one permutation of all 16,384 bytes.
+          A visually better candidate is evidence for this layout, not proof that every TEXR
+          record uses it. Inspect the previews before adopting any conversion globally.
+          """
+          (out_root / "README.md").write_text(readme, encoding="utf-8")
+          print(f"Generated {len(rows)} PNG candidates. Source BINs and prior PNGs were not modified.")
+          PY
+      - name: Commit comparison previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/converted/psmt8-unswizzle-test-v5
+          if git diff --cached --quiet; then
+            echo "No comparison changes."
+          else
+            git commit -m "Add CrossStrike PSMT8 unswizzle comparison"
+            git push
+          fi
+      - name: Upload comparison previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-PSMT8-unswizzle-test-v5
+          path: samples/cross-strike/converted/psmt8-unswizzle-test-v5/
+          if-no-files-found: error
+          retention-days: 14
