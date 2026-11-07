@@ -1,0 +1,135 @@
+name: Convert CrossStrike TEXR to PNG candidates
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate PNG previews from TEXR data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet Pillow
+          python3 <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import csv, hashlib, struct
+
+          src_root = Path("samples/cross-strike/analysis/extracted")
+          out_root = Path("samples/cross-strike/converted/png-candidates")
+          out_root.mkdir(parents=True, exist_ok=True)
+          report = ["# CrossStrike TEXR → PNG candidate previews", "",
+                    "These are experimental interpretations of the original TEXR bytes, not confirmed decoded game textures.",
+                    "Original BIN files are read-only and are never modified.", ""]
+          rows = []
+          dims = [32, 64, 128, 256, 512]
+          offsets = [16, 32, 64, 128, 256, 512, 1024]
+
+          def save_candidate(img, name, meta):
+              path = out_root / name
+              img.save(path, format="PNG")
+              rows.append([name, *meta, path.stat().st_size])
+
+          for folder in sorted(src_root.iterdir()):
+              if not folder.is_dir():
+                  continue
+              for src in sorted(folder.glob("TEXR_*.bin")):
+                  data = src.read_bytes()
+                  stem = f"{folder.name}_{src.stem}"
+                  report += [f"## {folder.name}/{src.name}",
+                             f"- BIN size: {len(data)} bytes",
+                             f"- SHA-256: {hashlib.sha256(data).hexdigest()}",
+                             f"- First uint32 LE (possible texture count): {struct.unpack_from('<I', data)[0] if len(data)>=4 else 0}",
+                             ""]
+                  made = 0
+
+                  # Hypothesis A: raw 32-bit pixel data, with common PS2 channel orders.
+                  for off in offsets:
+                      if off >= len(data):
+                          continue
+                      for w in dims:
+                          for h in dims:
+                              n = w*h*4
+                              if off+n > len(data):
+                                  continue
+                              raw = data[off:off+n]
+                              for mode, order in [("RGBA", (0,1,2,3)), ("BGRA", (2,1,0,3))]:
+                                  pixels = bytearray(n)
+                                  for i in range(0, n, 4):
+                                      pixels[i:i+4] = bytes(raw[i+j] for j in order)
+                                  img = Image.frombytes("RGBA", (w,h), bytes(pixels))
+                                  name = f"{stem}_raw{mode}_{w}x{h}_off{off:04x}.png"
+                                  save_candidate(img, name, [folder.name, src.name, off, mode, w, h])
+                                  made += 1
+                              # One RGB interpretation per size/offset.
+                              n3 = w*h*3
+                              if off+n3 <= len(data):
+                                  img = Image.frombytes("RGB", (w,h), data[off:off+n3])
+                                  name = f"{stem}_rawRGB_{w}x{h}_off{off:04x}.png"
+                                  save_candidate(img, name, [folder.name, src.name, off, "RGB", w, h])
+                                  made += 1
+
+                  # Hypothesis B: 256-entry RGBA palette followed by 8-bit indices.
+                  for pal_off in [16, 32, 64, 128, 256]:
+                      pal_end = pal_off + 1024
+                      if pal_end > len(data):
+                          continue
+                      palette = []
+                      for i in range(pal_off, pal_end, 4):
+                          r,g,b,a = data[i:i+4]
+                          palette.append((r,g,b,a))
+                      for pix_off in [pal_end, pal_end+16, pal_end+256, pal_end+1024]:
+                          if pix_off >= len(data):
+                              continue
+                          for w in dims:
+                              h = w
+                              n = w*h
+                              if pix_off+n > len(data):
+                                  continue
+                              idx = data[pix_off:pix_off+n]
+                              img = Image.new("RGBA", (w,h))
+                              img.putdata([palette[v] for v in idx])
+                              name = f"{stem}_indexed8_{w}x{h}_pal{pal_off:04x}_pix{pix_off:04x}.png"
+                              save_candidate(img, name, [folder.name, src.name, pix_off, f"INDEX8 palette@{pal_off}", w, h])
+                              made += 1
+
+                  report += [f"- Experimental PNG candidates generated: {made}", ""]
+          if not rows:
+              raise SystemExit("No TEXR BIN files found.")
+          with (out_root / "index.csv").open("w", newline="", encoding="utf-8") as f:
+              w = csv.writer(f)
+              w.writerow(["png", "pak", "source_bin", "data_offset", "interpretation", "width", "height", "png_bytes"])
+              w.writerows(rows)
+          (out_root / "README.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+          print("\n".join(report))
+          print(f"PNG candidates generated: {len(rows)}")
+          PY
+
+      - name: Commit PNG candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/converted/png-candidates
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Generate experimental CrossStrike TEXR PNG previews"
+            git push
+          fi
+
+      - name: Upload PNG candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-TEXR-PNG-candidates
+          path: samples/cross-strike/converted/png-candidates/
+          if-no-files-found: error
+          retention-days: 14
