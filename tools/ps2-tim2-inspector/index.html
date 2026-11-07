@@ -43,7 +43,8 @@ function parse(file,buffer){
   for(let i=0;i<imageCount;i++){
    if(pos+48>b.length){issues.push('Imagem '+(i+1)+': cabeçalho de 48 bytes incompleto no offset '+pos+'.');break;}
    const totalSize=u32(v,pos),clutSize=u32(v,pos+4),imageSize=u32(v,pos+8),headerSize=u16(v,pos+12),clutColors=u16(v,pos+14);
-   const pictureFormat=b[pos+16],mipmapCount=b[pos+17],clutType=b[pos+18],imageType=b[pos+19],width=u16(v,pos+20),height=u16(v,pos+22);\n   const gsTex0Low=u32(v,pos+24),psm=(gsTex0Low>>>20)&0x3f;
+   const pictureFormat=b[pos+16],mipmapCount=b[pos+17],clutType=b[pos+18],imageType=b[pos+19],width=u16(v,pos+20),height=u16(v,pos+22);
+   const gsTex0Low=u32(v,pos+24),psm=(gsTex0Low>>>20)&0x3f;
    const imageOffset=pos+headerSize,clutOffset=imageOffset+imageSize;
    const reasons=[];
    if(totalSize<48)reasons.push('totalSize menor que cabeçalho mínimo');
