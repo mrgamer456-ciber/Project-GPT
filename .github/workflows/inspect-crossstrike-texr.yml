@@ -51,7 +51,6 @@ jobs:
               signatures = [
                   ("png", b"\x89PNG\r\n\x1a\n"),
                   ("jpg", b"\xff\xd8\xff"),
-                  ("dds", b"DDS "),
                   ("bmp", b"BM"),
               ]
               for ext, sig in signatures:
@@ -125,7 +124,7 @@ jobs:
                       for ext, pos, size, name in found:
                           report.append(f"  - {ext.upper()} em 0x{pos:x}, {size} bytes: `{name}`")
                   else:
-                      report.append("- Nenhuma assinatura PNG/JPEG/DDS/BMP completa reconhecida.")
+                      report.append("- Nenhuma assinatura PNG/JPEG/BMP completa reconhecida.")
                   report.append("")
                   rows.append([pak, src.name, len(data), sha, copy_path.as_posix(), len(found)])
 
