@@ -32,12 +32,33 @@
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.2/dist/jszip.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);let zipEntries=[];
+const LIMITS={archive:128*1024*1024,entries:5000,entry:128*1024*1024,total:256*1024*1024};
 function say(t){$('status').textContent=t}
-function safeName(n){return n.split('/').pop()||n}
+function safeName(n){return n.split(/[\\/]/).pop()||'arquivo.bin'}
+async function responseBlobLimited(response){
+ const length=Number(response.headers.get('content-length'));
+ if(Number.isFinite(length)&&length>LIMITS.archive)throw Error('ZIP maior que 128 MiB.');
+ const reader=response.body?.getReader();
+ if(!reader){const blob=await response.blob();if(blob.size>LIMITS.archive)throw Error('ZIP maior que 128 MiB.');return blob;}
+ const chunks=[];let total=0;
+ try{while(true){const part=await reader.read();if(part.done)break;total+=part.value.byteLength;if(total>LIMITS.archive){await reader.cancel();throw Error('ZIP maior que 128 MiB.');}chunks.push(part.value);}}
+ catch(e){try{await reader.cancel()}catch{}throw e;}
+ return new Blob(chunks,{type:response.headers.get('content-type')||'application/zip'});
+}
 async function unpack(blob){
+ if(blob.size>LIMITS.archive)throw Error('ZIP maior que 128 MiB.');
  say('Lendo ZIP…');$('results').hidden=true;
- const zip=await JSZip.loadAsync(blob);zipEntries=[];
- for(const [name,e] of Object.entries(zip.files)){if(!e.dir)zipEntries.push({name,entry:e,size:e._data?.uncompressedSize??0})}
+ const zip=await JSZip.loadAsync(blob),files=Object.entries(zip.files).filter(([,e])=>!e.dir);
+ if(files.length>LIMITS.entries)throw Error('ZIP contém mais de 5.000 arquivos.');
+ let total=0;const entries=[];
+ for(const [name,e] of files){
+  const size=Number(e._data?.uncompressedSize??0);
+  if(!Number.isSafeInteger(size)||size<0)throw Error('Tamanho inválido declarado em '+name+'.');
+  if(size>LIMITS.entry)throw Error('O arquivo '+name+' ultrapassa 128 MiB descompactado.');
+  total+=size;if(total>LIMITS.total)throw Error('O conteúdo declarado ultrapassa 256 MiB descompactados.');
+  entries.push({name,entry:e,size});
+ }
+ zipEntries=entries;
  zipEntries.sort((a,b)=>a.name.localeCompare(b.name));
  render();$('results').hidden=false;
  const pak=zipEntries.filter(x=>/\.pak$/i.test(x.name)).length;
@@ -49,7 +70,7 @@ function render(){
  $('list').innerHTML='';
  for(const x of rows){const d=document.createElement('div');d.className='file';const info=document.createElement('div');info.innerHTML='<strong></strong><br><small></small>';info.querySelector('strong').textContent=x.name;info.querySelector('small').textContent=(x.size||0).toLocaleString('pt-BR')+' bytes';const b=document.createElement('button');b.textContent='Baixar';b.onclick=async()=>{const blob=await x.entry.async('blob');const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=safeName(x.name);a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)};d.append(info,b);$('list').append(d)}
 }
-$('fetch').onclick=async()=>{try{$('fetch').disabled=true;say('Baixando ZIP do GitHub…');const r=await fetch($('url').value);if(!r.ok)throw Error('HTTP '+r.status);await unpack(await r.blob())}catch(e){say('Não consegui baixar pelo link: '+e.message+'. Tente selecionar o ZIP manualmente.')}finally{$('fetch').disabled=false}};
+$('fetch').onclick=async()=>{try{$('fetch').disabled=true;say('Baixando ZIP do GitHub…');const r=await fetch($('url').value);if(!r.ok)throw Error('HTTP '+r.status);await unpack(await responseBlobLimited(r))}catch(e){say('Não consegui baixar pelo link: '+e.message+'. Tente selecionar o ZIP manualmente.')}finally{$('fetch').disabled=false}};
 $('file').onchange=()=>{$('extract').disabled=!$('file').files.length};
 $('extract').onclick=async()=>{try{await unpack($('file').files[0])}catch(e){say('Erro ao extrair: '+e.message)}};
 $('filter').oninput=render;
