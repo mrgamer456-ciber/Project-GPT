@@ -57,6 +57,23 @@ Ferramenta auxiliar para listar o conteúdo de arquivos ZIP locais ou de um link
 - **Dependência:** carrega JSZip 3.10.1 pelo jsDelivr; precisa de internet para abrir a biblioteca.
 - **Limite:** não cria uma pasta extraída completa. Arquivos ZIP muito grandes ou com milhares de entradas podem consumir bastante memória; prefira amostras confiáveis e pequenas.
 
+## Experimento de análise — Cross Strike (PS2)
+
+A pasta `samples/cross-strike/` reúne uma amostra ZIP, arquivos PS2 extraídos e resultados de engenharia reversa. O relatório atual identifica `MAIN.ELF` como ELF32 MIPS little-endian e registra sete arquivos PAK com assinatura `HJK1`, versão 2 e tabelas de seções verificadas.
+
+- **Originais:** `samples/cross-strike/PS2/` contém `MAIN.ELF` e os sete PAKs.
+- **Análise:** `analysis/report.md` documenta cabeçalhos, hashes, seções e strings; `analysis/extracted/` guarda cópias brutas das seções extraídas.
+- **Texturas:** `converted/` contém inspeções e PNGs experimentais de registros TEXR. `alpha-clut-test-v4/` compara interpretações de alpha e ordem de CLUT; são candidatos de comparação, não uma confirmação de renderização idêntica à do jogo.
+- **Edição:** `textures-to-edit/` reúne cópias planas das texturas originais exportadas, sem alterar os BINs de origem.
+
+### Workflows do Cross Strike
+
+Os nove workflows em `.github/workflows/` são iniciados manualmente (`workflow_dispatch`). Eles têm permissão `contents: write` porque alguns publicam os resultados gerados com commit e push para `main`. Execute-os somente quando quiser atualizar esses resultados; esta documentação não os executa automaticamente.
+
+### Aviso sobre distribuição
+
+O repositório é público. Publique amostras, executáveis, PAKs e texturas extraídas somente se você tiver autorização para redistribuí-los. A presença de um aviso nesta documentação não concede direitos sobre conteúdo de terceiros. Se a autorização não estiver clara, mantenha os arquivos em um repositório privado ou não os publique.
+
 ## Abrir as ferramentas
 A página inicial está em [index.html](index.html) e reúne os cinco laboratórios e o utilitário ZIP Extractor. Cada ferramenta também pode ser baixada como um arquivo `index.html` e aberta localmente em um navegador moderno.
 
