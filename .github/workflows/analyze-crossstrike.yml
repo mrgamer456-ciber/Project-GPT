@@ -1,4 +1,4 @@
-name: Analyze CrossStrike PS2 Files
+name: Analyze and Extract CrossStrike PS2 Files
 
 on:
   workflow_dispatch:
@@ -13,120 +13,173 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Inspect ELF and PAK files
+      - name: Analyze ELF and extract PAK sections
         shell: bash
         run: |
           set -euo pipefail
           python3 <<'PY'
           from pathlib import Path
-          import hashlib, math, re, struct
-          
+          import csv, hashlib, math, re, struct
+
           root = Path("samples/cross-strike/PS2")
           out = Path("samples/cross-strike/analysis")
+          extracted = out / "extracted"
           out.mkdir(parents=True, exist_ok=True)
+          extracted.mkdir(parents=True, exist_ok=True)
           report = []
-          
+          manifest = []
+
           def add(s=""):
               report.append(str(s))
-          
+
           def entropy(data):
-              if not data: return 0.0
+              if not data:
+                  return 0.0
               counts = [0] * 256
-              for b in data: counts[b] += 1
+              for value in data:
+                  counts[value] += 1
               n = len(data)
               return -sum((c/n)*math.log2(c/n) for c in counts if c)
-          
-          def printable_strings(data, minlen=5):
-              return [m.group().decode("ascii", "replace") for m in re.finditer(rb"[ -~]{%d,}" % minlen, data)]
-          
-          add("# CrossStrike PS2 — análise estática")
+
+          def strings(data, minlen=5):
+              return [m.group().decode("ascii", "replace")
+                      for m in re.finditer(rb"[ -~]{%d,}" % minlen, data)]
+
+          add("# CrossStrike PS2 — análise e extração")
           add("")
-          add("Relatório gerado automaticamente pelo GitHub Actions. Nenhum arquivo original foi modificado.")
+          add("Gerado pelo GitHub Actions. Os arquivos originais não são modificados.")
+          add("As seções extraídas são blocos binários brutos; a identificação interna de cada formato será feita em etapas posteriores.")
           add("")
-          
+
           elf = root / "MAIN.ELF"
           if elf.exists():
-              b = elf.read_bytes()
+              data = elf.read_bytes()
               add("## MAIN.ELF")
-              add(f"- Tamanho: {len(b):,} bytes")
-              add(f"- SHA-256: `{hashlib.sha256(b).hexdigest()}`")
-              add(f"- Entropia global: {entropy(b):.4f} bits/byte")
-              if b[:4] == b"\\x7fELF" and len(b) >= 52:
-                  cls, enc = b[4], b[5]
+              add(f"- Tamanho: {len(data):,} bytes")
+              add(f"- SHA-256: `{hashlib.sha256(data).hexdigest()}`")
+              add(f"- Entropia: {entropy(data):.4f} bits/byte")
+              if data[:4] == b"\x7fELF" and len(data) >= 52:
+                  cls, enc = data[4], data[5]
                   endian = "<" if enc == 1 else ">" if enc == 2 else None
-                  add(f"- ELF válido: sim; classe: {32 if cls == 1 else 64 if cls == 2 else 'desconhecida'}-bit; endian: {enc}")
-                  if endian:
-                      if cls == 1 and len(b) >= 52:
-                          machine = struct.unpack_from(endian+"H", b, 18)[0]
-                          entry = struct.unpack_from(endian+"I", b, 24)[0]
-                          phoff, shoff = struct.unpack_from(endian+"II", b, 28)
-                          phentsize, phnum, shentsize, shnum = struct.unpack_from(endian+"HHHH", b, 42)
-                      elif cls == 2 and len(b) >= 64:
-                          machine = struct.unpack_from(endian+"H", b, 18)[0]
-                          entry = struct.unpack_from(endian+"Q", b, 24)[0]
-                          phoff, shoff = struct.unpack_from(endian+"QQ", b, 32)
-                          phentsize, phnum, shentsize, shnum = struct.unpack_from(endian+"HHHH", b, 54)
-                      else:
-                          machine = entry = phoff = shoff = phentsize = phnum = shentsize = shnum = None
-                      add(f"- Machine: {machine}; entry point: `0x{entry:x}`" if entry is not None else "- Cabeçalho ELF parcialmente legível")
+                  add("- Assinatura ELF: válida")
+                  add(f"- Classe: {32 if cls == 1 else 64 if cls == 2 else 'desconhecida'}-bit")
+                  add(f"- Endian: {'little-endian' if enc == 1 else 'big-endian' if enc == 2 else 'desconhecido'}")
+                  if endian and cls == 1:
+                      machine = struct.unpack_from(endian+"H", data, 18)[0]
+                      entry = struct.unpack_from(endian+"I", data, 24)[0]
+                      phoff, shoff = struct.unpack_from(endian+"II", data, 28)
+                      phentsize, phnum, shentsize, shnum = struct.unpack_from(endian+"HHHH", data, 42)
+                      add(f"- Machine: {machine} ({'MIPS' if machine == 8 else 'não identificado'})")
+                      add(f"- Entry point: `0x{entry:08x}`")
                       add(f"- Program headers: {phnum}; section headers: {shnum}")
-                      if cls == 1 and phoff and phentsize and phnum:
-                          add("- Segmentos (tipo, offset, vaddr, filesz, memsz):")
-                          for i in range(min(phnum, 64)):
-                              p = phoff + i*phentsize
-                              if p+32 > len(b): break
-                              typ, off, va, pa, fs, ms, fl, al = struct.unpack_from(endian+"IIIIIIII", b, p)
-                              add(f"  - {i}: type={typ}, off=0x{off:x}, vaddr=0x{va:x}, filesz={fs}, memsz={ms}")
+                      add("- Segmentos:")
+                      for i in range(min(phnum, 128)):
+                          pos = phoff + i * phentsize
+                          if phentsize < 32 or pos + 32 > len(data):
+                              add(f"  - {i}: tabela fora dos limites ou entrada curta")
+                              break
+                          typ, off, va, pa, fsize, msize, flags, align = struct.unpack_from(endian+"IIIIIIII", data, pos)
+                          valid = off <= len(data) and fsize <= len(data)-off
+                          add(f"  - {i}: tipo={typ}, offset=0x{off:x}, vaddr=0x{va:x}, arquivo={fsize}, memória={msize}, válido={valid}")
+                      if shnum and shentsize and shoff:
+                          add("- Tabela de seções: cabeçalho detectado")
+                          add(f"  - Offset: 0x{shoff:x}; tamanho de entrada: {shentsize}; quantidade: {shnum}")
+                  elif endian and cls == 2 and len(data) >= 64:
+                      machine = struct.unpack_from(endian+"H", data, 18)[0]
+                      entry = struct.unpack_from(endian+"Q", data, 24)[0]
+                      add(f"- Machine: {machine}; entry point: `0x{entry:x}`")
+                      add("- ELF64 detectado; detalhes de segmentos não expandidos neste relatório.")
+                  else:
+                      add("- Cabeçalho ELF reconhecido, mas classe/endian não suportados para leitura detalhada.")
               else:
-                  add("- Assinatura ELF não reconhecida.")
-              ss = printable_strings(b)
-              add(f"- Strings ASCII encontradas (mínimo 5 caracteres): {len(ss)}")
-              add("### Strings relevantes (até 250)")
-              keywords = re.compile(r"pak|asset|texture|model|mesh|sound|audio|map|load|file|camera|weapon|player|enemy|font|script|\.png|\.ps2|\.tm2|\.vag|\.adp", re.I)
-              selected = [s for s in ss if keywords.search(s)]
-              for s in selected[:250]: add(f"- `{s[:180]}`")
-              if not selected:
-                  for s in ss[:100]: add(f"- `{s[:180]}`")
+                  add("- Assinatura ELF não reconhecida ou arquivo curto.")
+              found = strings(data)
+              add(f"- Strings ASCII (mínimo 5 caracteres): {len(found)}")
+              keys = re.compile(r"pak|asset|texture|model|mesh|sound|audio|map|load|file|camera|weapon|player|enemy|font|script|\.png|\.tm2|\.vag|\.adp", re.I)
+              relevant = [s for s in found if keys.search(s)]
+              add("### Strings relevantes")
+              for value in relevant[:250]:
+                  add(f"- `{value[:180]}`")
               add("")
-          
-          add("## Arquivos PAK")
+
+          add("## PAKs e seções extraídas")
           pakdir = root / "ASSETS"
-          for p in sorted(pakdir.glob("*.PAK")):
-              b = p.read_bytes()
-              head = b[:128]
-              add(f"### {p.name}")
-              add(f"- Tamanho: {len(b):,} bytes")
-              add(f"- SHA-256: `{hashlib.sha256(b).hexdigest()}`")
-              add(f"- Entropia global: {entropy(b):.4f} bits/byte")
-              add(f"- Primeiros 128 bytes (hex): `{head.hex(' ')}`")
-              add(f"- Primeiros 16 bytes (ASCII): `{''.join(chr(x) if 32 <= x < 127 else '.' for x in b[:16])}`")
-              ss = printable_strings(b, 4)
-              add(f"- Strings ASCII encontradas (mínimo 4 caracteres): {len(ss)}")
-              for s in ss[:80]: add(f"  - `{s[:160]}`")
+          for pak in sorted(pakdir.glob("*.PAK")):
+              blob = pak.read_bytes()
+              add(f"### {pak.name}")
+              add(f"- Tamanho: {len(blob):,} bytes")
+              add(f"- SHA-256: `{hashlib.sha256(blob).hexdigest()}`")
+              if len(blob) < 16 or blob[:4] != b"HJK1":
+                  add("- ERRO: assinatura HJK1 ausente ou cabeçalho curto; não extraído.")
+                  add("")
+                  continue
+
+              version, count, reserved = struct.unpack_from("<III", blob, 4)
+              table_end = 16 + count * 12
+              add(f"- Assinatura: HJK1; versão: {version}; seções declaradas: {count}")
+              add(f"- Fim da tabela: 0x{table_end:x}")
+              if count > 256 or table_end > len(blob):
+                  add("- ERRO: quantidade de seções/tabela fora dos limites; não extraído.")
+                  add("")
+                  continue
+
+              pak_out = extracted / pak.stem
+              pak_out.mkdir(parents=True, exist_ok=True)
+              valid_count = 0
+              for index in range(count):
+                  pos = 16 + index * 12
+                  tag_raw = blob[pos:pos+4]
+                  offset, size = struct.unpack_from("<II", blob, pos+4)
+                  try:
+                      tag = tag_raw.decode("ascii")
+                  except UnicodeDecodeError:
+                      tag = "UNKN"
+                  valid = (all(32 <= c < 127 for c in tag_raw)
+                           and offset >= table_end
+                           and offset <= len(blob)
+                           and size <= len(blob) - offset)
+                  add(f"- {index:02d} `{tag}`: offset=0x{offset:x}, tamanho={size}, válido={valid}")
+                  if not valid:
+                      continue
+                  payload = blob[offset:offset+size]
+                  safe_tag = re.sub(r"[^A-Za-z0-9_-]", "_", tag)
+                  filename = f"{safe_tag}_{index:02d}.bin"
+                  destination = pak_out / filename
+                  destination.write_bytes(payload)
+                  manifest.append([pak.name, index, tag, offset, size, str(destination)])
+                  valid_count += 1
+              add(f"- Seções extraídas com sucesso: {valid_count}/{count}")
+              add(f"- Pasta: `{pak_out.as_posix()}/`")
               add("")
-          
-          (out / "report.md").write_text("\\n".join(report)+"\\n", encoding="utf-8")
+
+          with (out / "manifest.csv").open("w", newline="", encoding="utf-8") as handle:
+              writer = csv.writer(handle)
+              writer.writerow(["pak", "index", "tag", "offset", "size", "output"])
+              writer.writerows(manifest)
+
+          (out / "report.md").write_text("\n".join(report) + "\n", encoding="utf-8")
           print((out / "report.md").read_text(encoding="utf-8"))
+          print(f"Seções exportadas: {len(manifest)}")
           PY
 
-      - name: Commit analysis report
+      - name: Commit report and extracted sections
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add samples/cross-strike/analysis/report.md
+          git add samples/cross-strike/analysis
           if git diff --cached --quiet; then
-            echo "Relatório sem alterações."
+            echo "Nenhuma alteração para salvar."
           else
-            git commit -m "Add CrossStrike PS2 binary analysis report"
+            git commit -m "Analyze CrossStrike ELF and extract PAK sections"
             git push
           fi
 
-      - name: Upload report artifact
+      - name: Upload analysis and extracted sections
         uses: actions/upload-artifact@v4
         with:
-          name: CrossStrike-PS2-analise
-          path: samples/cross-strike/analysis/report.md
+          name: CrossStrike-PS2-analysis-and-extracted-sections
+          path: samples/cross-strike/analysis/
           if-no-files-found: error
           retention-days: 14
