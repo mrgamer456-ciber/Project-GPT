@@ -2,6 +2,9 @@ name: Extract every CrossStrike TEXR texture
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/convert-crossstrike-texr-png-v3.yml'
 
 permissions:
   contents: write
