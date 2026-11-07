@@ -1,0 +1,142 @@
+name: Validate CrossStrike JPEG Candidates
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-jpeg:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install image validator
+        run: python3 -m pip install --user Pillow
+
+      - name: Validate JPEG candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          from io import BytesIO
+          import csv
+          from PIL import Image, UnidentifiedImageError
+
+          source_root = Path("samples/cross-strike/analysis/extracted")
+          output_root = Path("samples/cross-strike/converted/jpg-validation")
+          output_root.mkdir(parents=True, exist_ok=True)
+
+          report = [
+              "# CrossStrike JPEG candidate validation",
+              "",
+              "Este teste NÃO considera uma assinatura FF D8 FF suficiente para provar que os bytes são uma imagem.",
+              "Cada candidato é aberto pelo Pillow, passa por verify(), é reaberto e decodificado por load().",
+              "",
+          ]
+          rows = []
+          valid_files = []
+
+          sources = []
+          for pak_dir in sorted(source_root.iterdir()):
+              if pak_dir.is_dir():
+                  for src in sorted(pak_dir.glob("TEXR_*.bin")):
+                      sources.append((pak_dir.name, src))
+
+          if not sources:
+              raise SystemExit("Nenhum TEXR_*.bin encontrado.")
+
+          for pak, src in sources:
+              data = src.read_bytes()
+              start = 0
+              candidate_number = 0
+
+              while True:
+                  pos = data.find(b"\xff\xd8\xff", start)
+                  if pos < 0:
+                      break
+
+                  candidate_number += 1
+                  end_marker = data.find(b"\xff\xd9", pos + 3)
+                  status = "REJEITADO"
+                  details = "Nenhum marcador EOI (FFD9) depois da assinatura."
+                  saved_name = ""
+
+                  if end_marker >= 0:
+                      payload = data[pos:end_marker + 2]
+                      try:
+                          with Image.open(BytesIO(payload)) as im:
+                              image_format = im.format
+                              dimensions = im.size
+                              im.verify()
+
+                          # Reabrir e decodificar todos os pixels; verify() sozinho não basta.
+                          with Image.open(BytesIO(payload)) as im:
+                              im.load()
+                              image_format = im.format
+                              dimensions = im.size
+
+                          if image_format != "JPEG":
+                              raise ValueError(f"Formato detectado: {image_format}")
+
+                          saved_name = f"{pak}_{src.stem}_candidate_{candidate_number:03d}_{pos:08x}.jpg"
+                          destination = output_root / saved_name
+                          destination.write_bytes(payload)
+                          status = "VALIDADO"
+                          details = f"JPEG decodificado; dimensões {dimensions[0]}x{dimensions[1]}; {len(payload)} bytes."
+                          valid_files.append(destination.as_posix())
+
+                      except Exception as exc:
+                          details = f"{type(exc).__name__}: {exc}"
+
+                  rows.append([pak, src.name, candidate_number, hex(pos), status, details, saved_name])
+                  report.append(f"- **{pak}/{src.name}**, candidato {candidate_number}, offset {hex(pos)}: **{status}** — {details}")
+                  start = pos + 3
+
+          report += [
+              "",
+              f"## Resultado",
+              f"- Candidatos encontrados: {len(rows)}",
+              f"- JPEGs realmente validados e decodificados: {len(valid_files)}",
+              "",
+          ]
+
+          if valid_files:
+              report.append("### Arquivos validados")
+              report.extend(f"- `{name}`" for name in valid_files)
+          else:
+              report.append("Nenhum candidato passou pela validação completa. Isso indica que as assinaturas encontradas provavelmente são bytes internos dos dados TEXR, não fotos JPEG completas.")
+
+          with (output_root / "validation.csv").open("w", newline="", encoding="utf-8") as f:
+              writer = csv.writer(f)
+              writer.writerow(["pak", "source_bin", "candidate", "offset", "status", "details", "saved_file"])
+              writer.writerows(rows)
+
+          (output_root / "validation.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+          print("\n".join(report))
+          PY
+
+      - name: Commit validation results
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/converted/jpg-validation
+          if git diff --cached --quiet; then
+            echo "Nenhum resultado novo para salvar."
+          else
+            git commit -m "Validate CrossStrike embedded JPEG candidates"
+            git push
+          fi
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-JPEG-validation
+          path: samples/cross-strike/converted/jpg-validation/
+          if-no-files-found: error
+          retention-days: 14
