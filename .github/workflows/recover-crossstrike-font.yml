@@ -1,4 +1,4 @@
-name: Diagnose CrossStrike font TEXR layout
+name: Recover CrossStrike font texture
 
 on:
   workflow_dispatch:
@@ -7,78 +7,125 @@ permissions:
   contents: write
 
 jobs:
-  diagnose-font:
+  recover-font:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Inspect font TEXR record without guessing offsets
+      - name: Decode font atlas using validated TEXR offsets
         shell: bash
         run: |
           set -euo pipefail
+          python3 -m pip install --quiet Pillow
           python3 <<'PY'
           from pathlib import Path
+          from PIL import Image
           import struct, hashlib, collections
 
           src = Path("samples/cross-strike/analysis/extracted/COMMON/TEXR_01.bin")
           data = src.read_bytes()
+          GLOBAL = 0x10
+          RECORD = 0x4420
+          PALETTE_REL = 0x10
+          PIXELS_REL = 0x410
+          W = H = 128
+          N = W * H
+
+          if len(data) < GLOBAL:
+              raise SystemExit("TEXR file is shorter than its global header")
+          count = struct.unpack_from("<I", data, 0)[0]
+          if len(data) != GLOBAL + count * RECORD:
+              raise SystemExit("TEXR length does not match the validated fixed-record layout")
+          if count < 1:
+              raise SystemExit("No texture records found")
+
+          record = GLOBAL
+          palette_start = record + PALETTE_REL
+          pixels_start = record + PIXELS_REL
+          palette_end = palette_start + 256 * 4
+          pixels_end = pixels_start + N
+          if palette_end != pixels_start or pixels_end > record + RECORD - 0x10:
+              raise SystemExit("Validated palette/pixel boundaries do not fit the first record")
+
+          palette = [tuple(data[p:p+4]) for p in range(palette_start, palette_end, 4)]
+          indices = data[pixels_start:pixels_end]
+          if len(indices) != N:
+              raise SystemExit("Font pixel index block is incomplete")
+
+          # Preserve the actual in-game texture as RGBA without brightness or alpha edits.
+          font = Image.new("RGBA", (W, H))
+          font.putdata([palette[idx] for idx in indices])
+
           out = Path("samples/cross-strike/font-recovery")
           out.mkdir(parents=True, exist_ok=True)
+          raw_path = out / "COMMON_TEXR_001_font_rgba.png"
+          font.save(raw_path, optimize=True)
 
-          count = struct.unpack_from("<I", data, 0)[0] if len(data) >= 4 else 0
+          # Transparent white glyph atlases look blank on a white image viewer.
+          # These are inspection-only composites; the RGBA master remains untouched.
+          for name, bg in (
+              ("dark-preview", (32, 32, 32, 255)),
+              ("mid-preview", (128, 128, 128, 255)),
+              ("checker-preview", None),
+          ):
+              if bg is not None:
+                  canvas = Image.new("RGBA", (W, H), bg)
+              else:
+                  canvas = Image.new("RGBA", (W, H), (220, 220, 220, 255))
+                  from PIL import ImageDraw
+                  draw = ImageDraw.Draw(canvas)
+                  tile = 8
+                  for y in range(0, H, tile):
+                      for x in range(0, W, tile):
+                          if (x // tile + y // tile) % 2:
+                              draw.rectangle((x, y, x+tile-1, y+tile-1), fill=(160,160,160,255))
+              canvas.alpha_composite(font)
+              canvas.convert("RGB").save(out / f"COMMON_TEXR_001_{name}.png", optimize=True)
+
+          used = collections.Counter(indices)
+          alpha_used = collections.Counter(palette[i][3] for i in used)
           report = [
-              "# CrossStrike font TEXR diagnostic",
+              "# CrossStrike font atlas recovery",
               "",
-              f"- File size: {len(data)} bytes (0x{len(data):X})",
-              f"- First uint32: {count} (0x{count:X})",
-              f"- SHA-256: {hashlib.sha256(data).hexdigest()}",
-              f"- Expected 16 + count*0x4420: {16 + count*0x4420} bytes",
-              f"- Exact expected-size match: {len(data) == 16 + count*0x4420}",
+              "- Source: COMMON.PAK / TEXR record 1",
+              "- TEXR record size: 0x4420",
+              "- Palette: record +0x10 (256 RGBA entries)",
+              "- Pixel indices: record +0x410 (128x128 INDEXED8)",
+              "- Output master: RGBA PNG with source alpha preserved",
+              "- No brightness, contrast, alpha scaling, swizzle, or palette reordering applied.",
+              "- Dark/mid/checker previews are inspection-only composites; use the RGBA master as the texture source.",
+              f"- Source SHA-256: {hashlib.sha256(data).hexdigest()}",
+              f"- Master PNG SHA-256: {hashlib.sha256(raw_path.read_bytes()).hexdigest()}",
+              f"- Distinct pixel indices used: {len(used)}",
+              f"- Distinct alpha values used by referenced palette entries: {len(alpha_used)}",
+              f"- Most common alpha values: {alpha_used.most_common(16)}",
               "",
-              "## First 0x600 bytes",
+              "The earlier recovery attempt used incorrect offsets (+0x40 and +0x540). This version uses the same validated offsets as the all-texture V3 exporter.",
+              "This produces a correctly decoded inspection PNG; it does not yet prove that the game font rendering bug is fixed.",
               "",
-              "```text",
           ]
-          for start in range(0, min(len(data), 0x600), 16):
-              chunk = data[start:start+16]
-              report.append(f"{start:06X}: " + " ".join(f"{b:02X}" for b in chunk))
-          report += ["```", "", "## Record boundaries", ""]
-          record_size = 0x4420
-          for i in range(min(count, 3)):
-              base = 0x10 + i * record_size
-              report.append(f"- Record {i}: base=0x{base:X}, available={max(0, min(record_size, len(data)-base))} bytes")
-              report.append(f"  - first 32: {data[base:base+32].hex(' ')}")
-              report.append(f"  - last 32: {data[base+record_size-32:base+record_size].hex(' ')}")
-          report += ["", "## Candidate offsets within record 0", ""]
-          base = 0x10
-          for off in (0x00, 0x10, 0x20, 0x40, 0x100, 0x410, 0x420, 0x500, 0x540):
-              pos = base + off
-              chunk = data[pos:pos+32]
-              report.append(f"- +0x{off:03X} (absolute 0x{pos:X}): {chunk.hex(' ')}")
-          report += ["", "## Byte frequency in first record", ""]
-          rec = data[base:base+record_size]
-          freq = collections.Counter(rec)
-          report.append(", ".join(f"{b:02X}:{n}" for b,n in freq.most_common(24)))
-          report += ["", "No PNG was generated and no source file was modified.", ""]
-          target = out / "font-layout-diagnostic.md"
-          target.write_text("\n".join(report), encoding="utf-8")
-          print("\n".join(report))
+          (out / "README.md").write_text("\\n".join(report), encoding="utf-8")
+          print("\\n".join(report))
           PY
 
-      - name: Commit diagnostic report
+      - name: Commit font recovery previews
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add samples/cross-strike/font-recovery/font-layout-diagnostic.md
-          git commit -m "Diagnose CrossStrike font TEXR layout" || echo "No report changes"
-          git push
+          git add samples/cross-strike/font-recovery
+          if git diff --cached --quiet; then
+            echo "No font recovery changes."
+          else
+            git commit -m "Decode CrossStrike font atlas with validated TEXR offsets"
+            git push
+          fi
 
-      - name: Upload diagnostic report
+      - name: Upload font recovery previews
         uses: actions/upload-artifact@v4
         with:
-          name: CrossStrike-font-layout-diagnostic
-          path: samples/cross-strike/font-recovery/font-layout-diagnostic.md
+          name: CrossStrike-font-atlas-recovery
+          path: samples/cross-strike/font-recovery/
           if-no-files-found: error
           retention-days: 14
