@@ -29,15 +29,15 @@ jobs:
                     "These are experimental interpretations of the original TEXR bytes, not confirmed decoded game textures.",
                     "Original BIN files are read-only and are never modified.", ""]
           rows = []
-          dims = [32, 64, 128, 256, 512]
-          offsets = [16, 32, 64, 128, 256, 512, 1024]
+          dims = [64, 128, 256]
+          offsets = [16, 32, 64, 128, 256]
 
           def save_candidate(img, name, meta):
               path = out_root / name
               img.save(path, format="PNG")
               rows.append([name, *meta, path.stat().st_size])
 
-          for folder in sorted(src_root.iterdir()):
+          for folder in [src_root / "COMMON"]:
               if not folder.is_dir():
                   continue
               for src in sorted(folder.glob("TEXR_*.bin")):
@@ -77,7 +77,7 @@ jobs:
                                   made += 1
 
                   # Hypothesis B: 256-entry RGBA palette followed by 8-bit indices.
-                  for pal_off in [16, 32, 64, 128, 256]:
+                  for pal_off in [16, 32, 64]:
                       pal_end = pal_off + 1024
                       if pal_end > len(data):
                           continue
@@ -85,7 +85,7 @@ jobs:
                       for i in range(pal_off, pal_end, 4):
                           r,g,b,a = data[i:i+4]
                           palette.append((r,g,b,a))
-                      for pix_off in [pal_end, pal_end+16, pal_end+256, pal_end+1024]:
+                      for pix_off in [pal_end, pal_end+256]:
                           if pix_off >= len(data):
                               continue
                           for w in dims:
