@@ -1,4 +1,4 @@
-name: Recover CrossStrike font texture
+name: Diagnose CrossStrike font TEXR layout
 
 on:
   workflow_dispatch:
@@ -7,109 +7,78 @@ permissions:
   contents: write
 
 jobs:
-  recover-font:
+  diagnose-font:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Recover the previously validated INDEXED8 font
+      - name: Inspect font TEXR record without guessing offsets
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet Pillow
           python3 <<'PY'
           from pathlib import Path
-          from PIL import Image
-          import hashlib, struct
+          import struct, hashlib, collections
 
           src = Path("samples/cross-strike/analysis/extracted/COMMON/TEXR_01.bin")
-          if not src.is_file():
-              raise SystemExit(f"Missing source: {src}")
-
           data = src.read_bytes()
-          if len(data) < 16:
-              raise SystemExit("TEXR file is too small")
-
-          count = struct.unpack_from("<I", data, 0)[0]
-          record_size = 0x4420
-          if len(data) != 0x10 + count * record_size:
-              raise SystemExit("TEXR record layout does not validate")
-
-          # This is the exact layout from the previously verified readable font:
-          # palette RGBA at record+0x40; 128x128 indexed pixels at record+0x540.
-          record = 0x10
-          palette_start = record + 0x40
-          pixels_start = record + 0x540
-          palette_end = palette_start + 256 * 4
-          pixels_end = pixels_start + 128 * 128
-          if palette_end > record + record_size or pixels_end > record + record_size:
-              raise SystemExit("Font palette/pixel data exceeds the first TEXR record")
-
-          palette_rgba = [tuple(data[p:p+4]) for p in range(palette_start, palette_end, 4)]
-          indices = data[pixels_start:pixels_end]
-
-          # Keep the original 8-bit indexed representation and its per-entry alpha.
-          image = Image.frombytes("P", (128, 128), indices)
-          rgb_palette = []
-          alpha_palette = []
-          for r, g, b, a in palette_rgba:
-              rgb_palette.extend((r, g, b))
-              alpha_palette.append(a)
-          image.putpalette(rgb_palette)
-          image.info["transparency"] = bytes(alpha_palette)
-
           out = Path("samples/cross-strike/font-recovery")
           out.mkdir(parents=True, exist_ok=True)
-          target = out / "COMMON_TEXR_001_font_recovered.png"
-          image.save(target, format="PNG", optimize=True)
 
-          # Also make a clearly named copy in the flat editing folder.
-          edit = Path("samples/cross-strike/textures-to-edit")
-          edit.mkdir(parents=True, exist_ok=True)
-          image.save(edit / target.name, format="PNG", optimize=True)
-
-          check = Image.open(target)
-          check.load()
-          if check.mode != "P" or check.size != (128, 128):
-              raise SystemExit(f"Unexpected PNG result: mode={check.mode}, size={check.size}")
-
+          count = struct.unpack_from("<I", data, 0)[0] if len(data) >= 4 else 0
           report = [
-              "# CrossStrike font recovery",
+              "# CrossStrike font TEXR diagnostic",
               "",
-              "- Source: COMMON.PAK / TEXR record 1",
-              "- Format: PNG, INDEXED8 (P mode), 128x128",
-              "- Palette: record offset +0x40 (256 RGBA entries)",
-              "- Pixel indices: record offset +0x540 (16,384 bytes)",
-              "- Alpha: preserved per palette entry",
-              "- No brightness, contrast, swizzle, or image enhancement applied.",
-              f"- PNG bytes: {target.stat().st_size}",
-              f"- SHA-256: {hashlib.sha256(target.read_bytes()).hexdigest()}",
+              f"- File size: {len(data)} bytes (0x{len(data):X})",
+              f"- First uint32: {count} (0x{count:X})",
+              f"- SHA-256: {hashlib.sha256(data).hexdigest()}",
+              f"- Expected 16 + count*0x4420: {16 + count*0x4420} bytes",
+              f"- Exact expected-size match: {len(data) == 16 + count*0x4420}",
               "",
+              "## First 0x600 bytes",
+              "",
+              "```text",
           ]
-          (out / "README.md").write_text("\n".join(report), encoding="utf-8")
+          for start in range(0, min(len(data), 0x600), 16):
+              chunk = data[start:start+16]
+              report.append(f"{start:06X}: " + " ".join(f"{b:02X}" for b in chunk))
+          report += ["```", "", "## Record boundaries", ""]
+          record_size = 0x4420
+          for i in range(min(count, 3)):
+              base = 0x10 + i * record_size
+              report.append(f"- Record {i}: base=0x{base:X}, available={max(0, min(record_size, len(data)-base))} bytes")
+              report.append(f"  - first 32: {data[base:base+32].hex(' ')}")
+              report.append(f"  - last 32: {data[base+record_size-32:base+record_size].hex(' ')}")
+          report += ["", "## Candidate offsets within record 0", ""]
+          base = 0x10
+          for off in (0x00, 0x10, 0x20, 0x40, 0x100, 0x410, 0x420, 0x500, 0x540):
+              pos = base + off
+              chunk = data[pos:pos+32]
+              report.append(f"- +0x{off:03X} (absolute 0x{pos:X}): {chunk.hex(' ')}")
+          report += ["", "## Byte frequency in first record", ""]
+          rec = data[base:base+record_size]
+          freq = collections.Counter(rec)
+          report.append(", ".join(f"{b:02X}:{n}" for b,n in freq.most_common(24)))
+          report += ["", "No PNG was generated and no source file was modified.", ""]
+          target = out / "font-layout-diagnostic.md"
+          target.write_text("\n".join(report), encoding="utf-8")
           print("\n".join(report))
           PY
 
-      - name: Commit recovered font PNG
+      - name: Commit diagnostic report
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add samples/cross-strike/font-recovery samples/cross-strike/textures-to-edit/COMMON_TEXR_001_font_recovered.png
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "Recover previously validated CrossStrike font texture"
-            git push
-          fi
+          git add samples/cross-strike/font-recovery/font-layout-diagnostic.md
+          git commit -m "Diagnose CrossStrike font TEXR layout" || echo "No report changes"
+          git push
 
-      - name: Upload recovered font
+      - name: Upload diagnostic report
         uses: actions/upload-artifact@v4
         with:
-          name: CrossStrike-font-recovered-indexed8
-          path: |
-            samples/cross-strike/font-recovery/
-            samples/cross-strike/textures-to-edit/COMMON_TEXR_001_font_recovered.png
+          name: CrossStrike-font-layout-diagnostic
+          path: samples/cross-strike/font-recovery/font-layout-diagnostic.md
           if-no-files-found: error
           retention-days: 14
