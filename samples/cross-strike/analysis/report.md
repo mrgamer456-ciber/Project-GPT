@@ -1,1 +1,435 @@
-# CrossStrike PS2 — análise estática\n\nRelatório gerado automaticamente pelo GitHub Actions. Nenhum arquivo original foi modificado.\n\n## MAIN.ELF\n- Tamanho: 1,422,708 bytes\n- SHA-256: `bd31eba639e7b40c5fd8f9bcb9b4ff4ae5589192bb5215d1ea4e16bd16eb5056`\n- Entropia global: 5.6142 bits/byte\n- Assinatura ELF não reconhecida.\n- Strings ASCII encontradas (mínimo 5 caracteres): 4753\n### Strings relevantes (até 250)\n- `Player`\n- `https://hjk-master.ps2fps.workers.dev`\n- `loadcore`\n- `thsemap`\n- `loadcore`\n- `loadcore`\n- `out of file descriptors`\n- `IO/File_Manager`\n- `loadcore`\n- `modload`\n- `load elf error`\n- `loadcore`\n- `thsemap`\n- `modload`\n- `loadcore`\n- `loadcore`\n- `thsemap`\n- `scan_change_bitmap`\n- `loadcore`\n- `thsemap`\n- `thsemap`\n- `usbmass_bd: ERROR: Failed to allocate I/O semaphore`\n- `loadcore`\n- `loadcore`\n- `thsemap`\n- `thsemap`\n- `ERROR: Couldn't get device descriptor`\n- `ERROR: Couldn't get configuration descriptor`\n- `PS2KBD: Error sending string descriptor request`\n- `loadcore`\n- `thsemap`\n- `ERROR: Couldn't get device descriptor`\n- `PS2MOUSE: Error sending string descriptor request`\n- `ERROR: Couldn't get configuration descriptor`\n- `loadcore`\n- `thsemap`\n- `dev9: SMAP initialization failed: %d`\n- `loadcore`\n- `thsemap`\n- `loadcore`\n- `SMAP: module already loaded`\n- `SMAP: smap_init -> %d`\n- `SMAP_driver`\n- `_smap_read_phy`\n- `SMAP: %s: > %u ms`\n- `_smap_write_phy`\n- `smap: %s: > %u ms`\n- `SMAP: restarting auto nego (BMCR=0x%x, BMSR=0x%x)`\n- `SMAP: Resetting PHY`\n- `SMAP: PHY reset error`\n- `SMAP: no auto mode (conf=0x%x)`\n- `SMAP: Waiting Valid Link for %dMbps`\n- `SMAP: no strap mode (conf=0x%x->0x%x, bmsr=0x%x)`\n- `SMAP: anar=0x%x->0x%x`\n- `SMAP: auto mode (BMCR=0x%x ANAR=0x%x)`\n- `SMAP: waiting valid link for 100Mbps Half-Duplex`\n- `SMAP: waiting valid link for 10Mbps Half-Duplex`\n- `SMAP: PHY: %04x %04x %04x %04x %04x %04x`\n- `SMAP: FCSCR=%d RECR=%d`\n- `SMAP: PHY chip: DP83846A%d`\n- `SMAP: %s %s Duplex Mode %s Flow Control`\n- `SMAP: WaitEventFlag -> %d`\n- `SMAP (%s)`\n- `Usage: smap [<option>] [thpri=<prio>] [thstack=<stack>] [<conf>]`\n- `smap: %s: %s - invalid digit`\n- `SMAP: CreateEventFlag -> %d`\n- `SMAP: CreateThread -> %d`\n- `smap: StartThread -> %d`\n- `smap: NetManRegisterNetIF -> %d`\n- `MAPS/%s.PAK`\n- `map=%d`\n- `UNDER THE MAP`\n- `RELOAD     %d.%d S A SHELL`\n- `RELOAD     %d.%d S`\n- `%d PLAYERS`\n- `pak_parse failed for %s`\n- `pak ok, textures + renderer`\n- `models`\n- `loading %s`\n- `ASSETS/%s`\n- `cannot load %s`\n- `ENEMY TEAM`\n- `SCORES / MAP`\n- `LOADING...`\n- `PROFILE`\n- `the top middle, or under the minimap.`\n- `WEAPONS`\n- `PLAYER        K    D`\n- `WAITING FOR PLAYERS  %d / %d`\n- `WELCOME TO MULTIPLAYER`\n- `THIS MAP HAS NO MAP`\n- `TRAINING.PAK NOT FOUND NEXT TO THE GAME`\n- `DOWNLOAD CANCELLED`\n- `[CLICK] NEXT PLAYER   [ESC] MENU`\n- `[X] NEXT PLAYER   [START] MENU`\n- `LOADING THE SERVER LIST...`\n- `DOWNLOADING %s`\n- `ENEMY FLAG`\n- `WAITING FOR PLAYERS`\n- `NOT ENOUGH MEMORY FOR THE SERVER MAP`\n- `THE SERVER MAP IS DAMAGED`\n- `THE SERVER MAP %.20s IS NOT IN THIS BUILD`\n- `Player`\n- `[B] WEAPONS`\n- `[SELECT] WEAPONS`\n- `PRESS R TO RELOAD`\n- `PRESS [SQUARE] TO RELOAD`\n- `RELOADING`\n- `%d / %d PLAYERS`\n- `MULTIPLAYER`\n- `UP TO 16 PLAYERS`\n- `CROSS STRIKE  -  MULTIPLAYER`\n- `MAP         < %s >`\n- `ENEMY GUNS  < %s >`\n- `ENEMY TEAM  < %d >`\n- `%s PLAYERS ONLY`\n- `ASSETS/COMMON.PAK`\n- `COMMON.PAK`\n- `no COMMON.PAK: every map brings its own weapons, sounds and HUD`\n- `COMMON.PAK is damaged`\n- `COMMON.PAK: %u textures, %u models`\n- `THE ENEMY TEAM WINS`\n- `VOTE THE NEXT MAP`\n- `SERVER MAP`\n- `SWITCH WEAPON`\n- `RELOAD`\n- `R           RELOAD`\n- `SQUARE      RELOAD`\n- `Claude (Anthropic): code, 3D models, art`\n- `WEAPON SOUNDS AND EFFECTS`\n- `Thanks for their sounds to:`\n- `BoostSound`\n- `patchytherat (Freesound)`\n- `taure (Freesound)`\n- `SoundFX_exe`\n- `made with Fish Audio`\n- `The N E S W strip: at the top in the middle, or under the minimap.`\n- `How loud the others sound.`\n- `PLAYERS ONLINE`\n- `AUDIO`\n- `4 MAPS IN TURN`\n- `FLAT.PAK`\n- `ISLAND.PAK`\n- `KASBAH.PAK`\n- `OFFSHORE.PAK`\n- `SNOWFIELD.PAK`\n- `TRAINING.PAK`\n- `A map from an online server,`\n- `saved in the MAPS folder.`\n- `Fair fight for most players.`\n- `r_draw_mesh: mesh too big (%u verts, %u tris)`\n- `pak: missing section %s`\n- `pak: bad magic`\n- `pak: version %u, this build needs %u - regenerate the .PAK files`\n- `pak: bad %s`\n- `texture count`\n- `texture header`\n- `effect textures`\n- `material texture`\n- `model count`\n- `model`\n- `model vertices`\n- `model triangles`\n- `model texture`\n- `model indices`\n- `CHAR texture`\n- `emote sound`\n- `pak: PVSD does not match this pak, ignored`\n- `pak: %u textures, %u materials, %u chunks, %u collision tris, %u spawns%s`\n- `PLAYER          KILLS  DEATHS`\n- `MAPA        < %s >`\n- `Your team has fewer players`\n- `ESTE MAPA NO TIENE MAPA`\n- `ESTE MAPA NAO TEM MAPA`\n- `[CLICK] OPEN   [RIGHT CLICK] PREVIOUS MAP   [ENTER] PLAY`\n- `[CLIC] ABRIR   [CLIC DER.] MAPA ANTERIOR   [ENTER] JUGAR`\n- `[CLIQUE] ABRIR   [CLIQUE DIR.] MAPA ANTERIOR   [ENTER] JOGAR`\n- `[LEFT/RIGHT] MOVE   [UP/DOWN] MAP   [X] OPEN`\n- `[IZQ/DER] MOVER   [ARRIBA/ABAJO] MAPA   [X] ABRIR`\n- `[ESQ/DIR] MOVER   [CIMA/BAIXO] MAPA   [X] ABRIR`\n- `SELECT TAP  MAP`\n- `TOCA SELECT MAPA`\n- `TOQUE SELECT MAPA`\n- `M           MAP`\n- `M           MAPA`\n- `Pick your weapons.`\n- `NO PLAYER IS CALLED THAT`\n- `VOTA EL SIGUIENTE MAPA`\n- `XIMO MAPA`\n- `MAPA DEL SERVIDOR`\n- `MAPA DO SERVIDOR`\n- `BAJO EL MAPA`\n- `SOB O MAPA`\n- `arriba al centro, o bajo el minimapa.`\n- `em cima no centro, ou sob o minimapa.`\n- `La tira N E S O: arriba al centro, o bajo el minimapa.`\n- `A faixa N L S O: em cima no centro, ou sob o minimapa.`\n- `PLAYERS %d`\n- `PUNTOS / MAPA`\n- `PLACAR / MAPA`\n- `SOUNDS`\n- `hecha con Fish Audio`\n- `feita com Fish Audio`\n- `digo, modelos 3D, arte`\n- `Free sound effects: guns, reload, empty gun`\n- `4 MAPAS POR TURNOS`\n- `4 MAPAS EM ROTA`\n- `THE ENEMY FLAG WAS DROPPED`\n- `THE ENEMY TOOK YOUR FLAG`\n- `YOUR TEAM HAS THE ENEMY FLAG`\n- `THE ENEMY FLAG IS BACK AT THEIR BASE`\n- `THE ENEMY CAPTURED YOUR FLAG`\n- `PS2 PLAYERS ONLY`\n- `PC PLAYERS ONLY`\n- `WII PLAYERS ONLY`\n- `Wii PLAYERS ONLY`\n- `PS3 PLAYERS ONLY`\n- `THE PLAYERS JOIN IT FROM THE TOURNEYS TAB`\n- `LOADED  (ENTER: ANOTHER)`\n- `(NONE)  ENTER: PICK A FILE`\n- `PICTURE UPLOADED`\n- `UPLOADING THE PICTURE...`\n- `NOBODY YET: THE PLAYERS JOIN FROM THE TOURNEYS TAB`\n- `PLAYER REMOVED`\n- `[CLICK] A PLAYER: REMOVE   [CLICK] START   [ESC] BACK`\n- `[CLICK] A PLAYER: REMOVE   [CLICK] START   [ESC] CLOSE THE TOURNEY`\n- `A PLAYER LEFT: THE COUNTDOWN STOPPED`\n- `[CLICK] A PLAYER, THEN A PLACE: MOVE   [CLICK IT AGAIN] REMOVE`\n- `[F] FREE [G] CHASE [E] EYES [N/B] PLAYER [H] PANEL [X] NAMES [O] OUTLINE [T] TRAILS [+/-] DISTANCE`\n- `FREE CAMERA`\n- `[F] FREE  [G] CHASE  [E] EYES  [N/B] PLAYER  [1-9]  [H] OVERLAY  [X] NAMES  [M] MAP`\n- `[F] LIBRE  [G] SEGUIR  [E] OJOS  [N/B] JUGADOR  [1-9]  [H] PANEL  [X] NOMBRES  [M] MAPA`\n- `[F] LIVRE  [G] SEGUIR  [E] OLHOS  [N/B] JOGADOR  [1-9]  [H] PAINEL  [X] NOMES  [M] MAPA`\n- `[TRIANGLE] CAMERA  [L1/R1] PLAYER  [SQUARE] OVERLAY`\n- `UP TO %d PLAYERS`\n- `%d PLAYERS  -  BOTS: %s`\n- `PLAYERS     < %d >`\n- `THE ISLAND  -  %d PLAYERS  -  LAST ONE STANDING`\n- `Un mapa de un servidor online,`\n- `Um mapa de um servidor online,`\n- `guardado en la carpeta MAPS.`\n- `salvo na pasta MAPS.`\n- `https://hjk-master.ps2fps.workers.dev`\n- `The map arrived damaged`\n- `The map download stalled`\n- `usb: no answer: resetting the IOP and loading the drivers again`\n- `modules done, audio %s`\n- `smap.irx`\n- `net: driver did not load`\n- `MAPS/`\n\n## Arquivos PAK\n### COMMON.PAK\n- Tamanho: 5,377,440 bytes\n- SHA-256: `db293ae215aa0ac3de58c6695f095fb37b231a46ae49f3b6edf7fcaabfafa248`\n- Entropia global: 6.5951 bits/byte\n- Primeiros 128 bytes (hex): `48 4a 4b 31 02 00 00 00 0f 00 00 00 00 00 00 00 45 4e 56 52 d0 00 00 00 30 00 00 00 54 45 58 52 00 01 00 00 d0 87 21 00 4d 41 54 4c d0 88 21 00 10 00 00 00 43 48 4e 4b e0 88 21 00 d0 00 00 00 56 45 52 54 b0 89 21 00 60 00 00 00 49 4e 44 58 10 8a 21 00 10 00 00 00 43 4f 4c 48 20 8a 21 00 20 00 00 00 43 4f 4c 47 40 8a 21 00 40 00 00 00 43 4f 4c 54 80 8a 21 00 30 00 00 00 53 50 57 4e`\n- Primeiros 16 bytes (ASCII): `HJK1............`\n- Strings ASCII encontradas (mínimo 4 caracteres): 70546\n  - `HJK1`\n  - `ENVR`\n  - `TEXR`\n  - `MATL`\n  - `CHNK`\n  - `VERT`\n  - `INDX`\n  - `COLH `\n  - `COLG@`\n  - `COLT`\n  - `SPWN`\n  - `NAVN`\n  - `NAVL `\n  - `UIMG@`\n  - `MODL`\n  - `SNDS`\n  - `tB$"))))-1a`\n  - `#kljliiiiijjjjhhhiii^^[[[[[[[`\n  - `B$"))))-1a`\n  - `````%#`\n  - ``lljiiiiijjiihhhiii^^[[[[[[[`\n  - `D3).-222<f~`\n  - `l````%>%`\n  - `Xlliiiiiijjiihhhiii^^[[[[[[[`\n  - `4657GtDy`\n  - `l````aa;#`\n  - `#lliljlljjjihiiihhh\^VV[[[VV`\n  - `kkkkkf;%`\n  - `X`llhlhhhhhhiiihhh\]VV[[[VV`\n  - `t4Dw||{`\n  - `ykb~`\n  - `kkkkkkfa;%#`\n  - `k````\n  - `hhiiihhh\]VV[[[VV`\n  - `DBq|`\n  - `kkkkkkfaaa%%%%%>%#`\n  - `Whiiihhh\]VV[[[VV`\n  - `mBq|`\n  - `~~~~bfak`\n  - `kkkkkkfabfbba?;;1#`\n  - `Xiiiihhh\]VV[[[VV`\n  - `bb?%`l`\n  - `kkfkkkkfffaaa?<<#`\n  - ``jhjjiii_]VV[[[[[`\n  - `~bbba%a`\n  - `kkfkkkkfffaaab1#`\n  - ``hhhhhhi_]VV[[[[[`\n  - `~fbbb??;aa~`\n  - `~~fkkkkfffaaab#`\n  - ``h`Xhhhh_]]][[[[[`\n  - `ybbfb?@<??b`\n  - `~~kbbbbfbb??a<#`\n  - ``h\i]]][[[[[`\n  - `nbccc?????b`\n  - `~~~bbbbc????;1-#`\n  - `h^\]]][[[[[`\n  - `nbccc?????b`\n  - `~~~n~nbbbbc????;1--`\n  - `N^\]]][[[[[`\n  - `znncc?????b~~nnnnnnnfbbbc????;1--#`\n  - `N^\]]][[[[[`\n  - `znndd@@???bbnbcnnndnnbbdA====22--#`\n  - `^\]]]VVV[[`\n  - `|{zoneeedccceeec?>?@@eeeeB4222222---"`\n  - `^\\\\]]]V[`\n  - `|{zonqqedccceeeA2#1<4@@@@@22222-----" `\n  - ``hZZYY]]]V[`\n  - `|{zonqqedccceee@-###224444222-------" `\n  - `WWY]]]V[`\n  - `{{{ttBBAAABBC3$$ `\n  - `..33332----$$)))   `\n  - `WW^^^[[`\n  - `|||ttBBBBB776$  `\n  - `$).3332--$$$""     `\n  - `W^^^[[`\n  - `|||ttBBBBB773$ `\n  - ` ))...---"""`\n  - `P]^^[[`\n  - `|||ttBBB4433.$`\n  - `!'))))$$$  `\n\n### FLAT.PAK\n- Tamanho: 776,832 bytes\n- SHA-256: `503932440cd7d8604a3eebb1a8d153520c4e7aaaff61f1942841f050d304b9ac`\n- Entropia global: 2.9105 bits/byte\n- Primeiros 128 bytes (hex): `48 4a 4b 31 02 00 00 00 0e 00 00 00 00 00 00 00 45 4e 56 52 c0 00 00 00 30 00 00 00 54 45 58 52 f0 00 00 00 b0 96 05 00 4d 41 54 4c a0 97 05 00 20 00 00 00 43 48 4e 4b c0 97 05 00 b0 11 00 00 56 45 52 54 70 a9 05 00 c0 1e 01 00 49 4e 44 58 30 c8 06 00 a0 35 00 00 43 4f 4c 48 d0 fd 06 00 20 00 00 00 43 4f 4c 47 f0 fd 06 00 b0 23 04 00 43 4f 4c 54 a0 21 0b 00 e0 a0 00 00 53 50 57 4e`\n- Primeiros 16 bytes (ASCII): `HJK1............`\n- Strings ASCII encontradas (mínimo 4 caracteres): 146\n  - `HJK1`\n  - `ENVR`\n  - `TEXR`\n  - `MATL`\n  - `CHNK`\n  - `VERTp`\n  - `INDX0`\n  - `COLH`\n  - `COLG`\n  - `COLT`\n  - `SPWN`\n  - `NAVN`\n  - `NAVL`\n  - `UIMG`\n  - `RADRp`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `QvDln`\n  - `(knN`\n  - `(knN`\n  - `@DN~`\n  - `Do&Q<`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n  - `(knN`\n\n### ISLAND.PAK\n- Tamanho: 3,358,608 bytes\n- SHA-256: `30ede119df7b98cf924d27b42bb0c8a9ef67bf0cda5d44ffe7c18b045506e946`\n- Entropia global: 6.3595 bits/byte\n- Primeiros 128 bytes (hex): `48 4a 4b 31 02 00 00 00 0f 00 00 00 00 00 00 00 45 4e 56 52 d0 00 00 00 30 00 00 00 54 45 58 52 00 01 00 00 10 63 06 00 4d 41 54 4c 10 64 06 00 30 00 00 00 43 48 4e 4b 40 64 06 00 10 3f 00 00 56 45 52 54 50 a3 06 00 60 c8 11 00 49 4e 44 58 b0 6b 18 00 c0 fc 02 00 43 4f 4c 48 70 68 1b 00 20 00 00 00 43 4f 4c 47 90 68 1b 00 40 88 0c 00 43 4f 4c 54 d0 f0 27 00 80 a6 05 00 53 50 57 4e`\n- Primeiros 16 bytes (ASCII): `HJK1............`\n- Strings ASCII encontradas (mínimo 4 caracteres): 9801\n  - `HJK1`\n  - `ENVR`\n  - `TEXR`\n  - `MATL`\n  - `CHNK@d`\n  - `VERTP`\n  - `INDX`\n  - `COLHph`\n  - `COLG`\n  - `COLT`\n  - `SPWNP`\n  - `NAVN``\n  - `NAVL`\n  - `SNDS`\n  - `UIMG`\n  - `RADR`\n  - `z eO`\n  - `4[*!`\n  - `o/;Q`\n  - `UUQA`\n  - `A9o"}`\n  - `!P!!m@`\n  - `V^^?OP3`\n  - `SRD{`\n  - `U}ubtR/`\n  - `^LFf5`\n  - `;Au";ux`\n  - `![llH`\n  - `;}GkkA`\n  - `i/Ai`\n  - `##k::bouk`\n  - `)O?z`1[`\n  - `UQQoA`\n  - `UA0/b`\n  - `nD/S;`\n  - `Tuxi`\n  - `tS0;`\n  - `[OP_v`\n  - `U/G:`\n  - `'`v|1L`\n  - `;k#k`\n  - `ze11`\n  - `R;t~`\n  - `#GU":U`\n  - ` 0W1dWz`\n  - `:b=n;AR`\n  - `b{R{<bC X/R=z)`\n  - `<<=<0`\n  - `bDbX/<`\n  - `;R{Dp`\n  - `)#<0`\n  - `=X/nR`\n  - `XRktpt<`\n  - `<<={p`\n  - `{Dbb`\n  - `kR#=~~`\n  - `=ntRU`\n  - `S~D}`\n  - `oo}un#:`\n  - `N^ve`\n  - `)W>e`\n  - `e^XC`\n  - `2c<bX`\n  - `o9xQ`\n  - `f12L`\n  - `Uu;Gk`\n  - `gP]`gg`\n  - `3P^L`\n  - `8&aM`\n  - `|E*L)N`\n  - `aK&Z8-a`\n  - `4fEP`\n  - `5'`!`\n  - `2=b=tU"A`\n  - `+J%+`\n  - `[PL7E!`\n  - `5'5v`\n  - `^zv>`\n  - `2^531OP`\n  - `gKg&M`\n\n### KASBAH.PAK\n- Tamanho: 698,304 bytes\n- SHA-256: `1021238f123bddccef5836da6a4939372f7a8a837e10bd8ac6f53b5ec63f06ae`\n- Entropia global: 3.6649 bits/byte\n- Primeiros 128 bytes (hex): `48 4a 4b 31 02 00 00 00 0f 00 00 00 00 00 00 00 45 4e 56 52 d0 00 00 00 30 00 00 00 54 45 58 52 00 01 00 00 30 a7 06 00 4d 41 54 4c 30 a8 06 00 40 00 00 00 43 48 4e 4b 70 a8 06 00 f0 10 00 00 56 45 52 54 60 b9 06 00 f0 f3 00 00 49 4e 44 58 50 ad 07 00 a0 4a 00 00 43 4f 4c 48 f0 f7 07 00 20 00 00 00 43 4f 4c 47 10 f8 07 00 20 b5 01 00 43 4f 4c 54 30 ad 09 00 c0 df 00 00 53 50 57 4e`\n- Primeiros 16 bytes (ASCII): `HJK1............`\n- Strings ASCII encontradas (mínimo 4 caracteres): 2579\n  - `HJK1`\n  - `ENVR`\n  - `TEXR`\n  - `MATL0`\n  - `CHNKp`\n  - `VERT``\n  - `INDXP`\n  - `COLH`\n  - `COLG`\n  - `COLT0`\n  - `SPWN`\n  - `NAVN`\n  - `NAVL`\n  - `UIMG``\n  - `RADR@`\n  - `BARLP`\n  - `'N0A~`\n  - `$phw~SY]`\n  - `1'kw`\n  - `.|g9`\n  - `hy3K`\n  - `\K\v`\n  - `=suH`\n  - `?%9J`\n  - `htq"`\n  - ` 52d`\n  - `qeRT`\n  - `u9aj`\n  - `|=]'`\n  - `G'yT`\n  - `V)kN`\n  - `f=9:`\n  - ``>0oYH`\n  - `9ty:!|`\n  - `}#X:k`\n  - `|9&$`\n  - `:Q71S`\n  - `&zcD`\n  - `qY4k`\n  - `xPRv`\n  - `!]3I&`\n  - `0)0/`\n  - `D%;:`\n  - `#u.l21:F<`\n  - `sBYb`\n  - `D \W`\n  - `CSY)`\n  - `4IAh`\n  - `2{u]`\n  - `zy{s`\n  - `y~1'^`\n  - `0q:pD-`\n  - `/)dpm`\n  - `/hSe`\n  - `Ce/m`\n  - `=U+3X"`\n  - `w5MT`\n  - `opO[q`\n  - `>*mq8'`\n  - `.^1^`\n  - `Atcf`\n  - `hjNM`\n  - `a|.I`\n  - `,4j99`\n  - `H(u{D%`\n  - `*D\Z`\n  - `v)-Y`\n  - `oBlG`\n  - `-4y!`\n  - `mr;I`\n  - `e7qWY`\n  - `k-dPu`\n  - `!!&:(`\n  - `p3T+`\n  - `Jv-(`\n  - `zmj+H`\n  - `1vGM`\n  - `M_P4:`\n  - `hr21T`\n  - `gkwrQvam`\n\n### OFFSHORE.PAK\n- Tamanho: 5,741,152 bytes\n- SHA-256: `eabde26584fbfa06f025d884e0dadc151ec7c2369a715d4db42917b1e9b4bbf4`\n- Entropia global: 6.5037 bits/byte\n- Primeiros 128 bytes (hex): `48 4a 4b 31 02 00 00 00 11 00 00 00 00 00 00 00 45 4e 56 52 e0 00 00 00 30 00 00 00 54 45 58 52 10 01 00 00 d0 a8 23 00 4d 41 54 4c e0 a9 23 00 50 00 00 00 43 48 4e 4b 30 aa 23 00 f0 1c 00 00 56 45 52 54 20 c7 23 00 80 3f 01 00 49 4e 44 58 a0 06 25 00 a0 3d 00 00 43 4f 4c 48 40 44 25 00 20 00 00 00 43 4f 4c 47 60 44 25 00 20 1e 01 00 43 4f 4c 54 80 62 26 00 b0 8a 00 00 53 50 57 4e`\n- Primeiros 16 bytes (ASCII): `HJK1............`\n- Strings ASCII encontradas (mínimo 4 caracteres): 73482\n  - `HJK1`\n  - `ENVR`\n  - `TEXR`\n  - `MATL`\n  - `CHNK0`\n  - `VERT `\n  - `INDX`\n  - `COLH@D%`\n  - `COLG`D%`\n  - `COLT`\n  - `SPWN0`\n  - `NAVN@`\n  - `NAVL`\n  - `SNDS`\n  - `UIMG`\n  - `RADR $,`\n  - `MODL0$,`\n  - `BARL`\n  - `VPPYXYTWS`OWSWXTRXWS[^UZ`[Y\^VRXZUSXTQX[UUQ]Z[_VTZPRSTR]SS_UXSYWU[TWTYQSWSPN^RTW\P]TP^X]UOJ_YSOTZUWXZUUWX]YPW^PTJVY^PG[ZT[XXVQVRYUa^SYTTPRQWZZY\YWUX`WUQTZZJSMJ[`\n  - `16<&79,-8:8-473`\n  - `949().3/>199640`\n  - `17/3-7E5(03.005`\n  - `1682./00&1-)21-`\n  - `1129-4;3;827-:1`\n  - `+.123-60314(611`\n  - `00.:291873+01+7>5XPJ]&+.1&25290`\n  - `8,8.:1726>82/`\n  - `366../723:.25`\n  - `,/94-620+,.3.`\n  - `06,4/:377<(31`\n  - `915029<8/00>E`\n  - `1387223'42740`\n  - `2<K'.3;9,E4.2/3H\]U+3-58,++5884`\n  - `22234021613>0`\n  - `3135;):4/10/,`\n  - `1451+66/0)-14`\n  - `2345*/.684143`\n  - `56283/27620.3`\n  - `01841-2I41,/&`\n  - `9.0500534150<X_YT`\n  - `32+8.:5271/83`\n  - `6,7*5)00..+*4`\n  - `/124641;/:364`\n  - `8&5658B41:393`\n  - `6.51/49/878.3`\n  - `*520.28//9413`\n  - `39/,)33++1/60`\n  - `5>71350/.72X[^W`\n  - `45)73633-:3+5`\n  - `3-5<12..41<-2`\n  - `37>328/206;/0`\n  - `35>/:441;-//,`\n  - `,-531<66+6+2;`\n  - `*59-2984.4/*,`\n  - `,138:83876/43`\n  - `81225845-R]SY05`\n  - `-09<584/+4,-5;.`\n  - `'+/*824*0I,7/51`\n  - `17+03/5)1117811`\n  - `080.-19-60:/6-*`\n  - `877/1210/*31<96`\n  - `1-55525011/22*3`\n  - `2557265,3-1.62%`\n  - `-1.870.53XW]^3;76815386015122+51148/123371<3:4/450455+/090908);-/<4,-;5986*244//7+841*51,0-.20.3+>7,161-6/333-8509;03428$85:5+305*29/5021V[^R315>9,75:554366314*`\n  - `537127)9/600.+7`\n  - `069&*2.+242.28.`\n  - `6,112-2<1I>*-53`\n  - `-675114.7367,47`\n  - `7/.-83)3,*9,..)`\n  - `2/40<)5/1222;5,`\n  - `8',*21./3:6:*43`\n  - `205:)6565VR\U6,`\n  - `92263-1430,./`\n  - `@.@3/964/:1/2`\n  - `34/4/2-6210-0`\n  - `8:/413,,8149/`\n  - `,-58,4242&441`\n  - `5468753;51394`\n  - `/52/773/5:61-`\n  - `3752238YZQO1+44`\n\n### SNOWFIELD.PAK\n- Tamanho: 1,092,672 bytes\n- SHA-256: `9b9064c1b687fed44e6745d876bb78dcc0afed7a68a387b7b50efb9cb9ad45cd`\n- Entropia global: 4.7537 bits/byte\n- Primeiros 128 bytes (hex): `48 4a 4b 31 02 00 00 00 0f 00 00 00 00 00 00 00 45 4e 56 52 d0 00 00 00 30 00 00 00 54 45 58 52 00 01 00 00 70 2f 07 00 4d 41 54 4c 70 30 07 00 50 00 00 00 43 48 4e 4b c0 30 07 00 10 1e 00 00 56 45 52 54 d0 4e 07 00 e0 83 03 00 49 4e 44 58 b0 d2 0a 00 d0 a1 00 00 43 4f 4c 48 80 74 0b 00 20 00 00 00 43 4f 4c 47 a0 74 0b 00 90 8d 03 00 43 4f 4c 54 30 02 0f 00 d0 85 01 00 53 50 57 4e`\n- Primeiros 16 bytes (ASCII): `HJK1............`\n- Strings ASCII encontradas (mínimo 4 caracteres): 6862\n  - `HJK1`\n  - `ENVR`\n  - `TEXR`\n  - `MATLp0`\n  - `CHNK`\n  - `VERT`\n  - `INDX`\n  - `COLH`\n  - `COLG`\n  - `COLT0`\n  - `SPWN`\n  - `NAVN`\n  - `NAVL`\n  - `UIMG`\n  - `RADR `\n  - `SNOW0`\n  - `1)66`\n  - `%)0"+$`\n  - `'$.!`\n  - `&*"!-'`\n  - `<)$(-)`\n  - `."'!-`\n  - `#&'%031%-))*1`\n  - `-,'0&!`\n  - `6!0#`\n  - `&''+<`\n  - `!!2!!*'!4:`\n  - `-''$#`\n  - `!$,0!`\n  - `''**1(`\n  - `!'7*`\n  - `&!$<"'+ $0%'#`\n  - `'+/'#0*`\n  - `$ "33`\n  - `$2'!+$500"`\n  - `'(-!!$ $'`\n  - `* *!$'7#(`\n  - `(*&'0`\n  - `"-$))`\n  - `$,3*$`\n  - `!/3'`\n  - `*&B$!+%$`\n  - `!'$*'`\n  - `)10!`\n  - `'*%!`\n  - `'*:")`\n  - `#)9-*`\n  - ` *-)3'$`\n  - `0<+*`\n  - `$"$&-`\n  - `+ - `\n  - `(#$-`\n  - `!0*,`\n  - `03)?$%'`\n  - `$'!$`\n  - `(4%!`\n  - `('$$`\n  - `0'+/`\n  - `$&$+%*$(!!$`\n  - `>0&'*'`\n  - `6.,#`\n  - `@ $-&`\n  - `'#4# 4'`\n  - `!(6-!`\n  - `'$!%.'`\n  - `(<294`\n  - `*(>9&)`\n  - `0)1'!`\n  - `$"*$`\n  - `!9*'4*#`\n  - `(2$!!`\n  - `400$'!'`\n  - ` &&" 2=$`\n  - `!$-'7"60`\n  - `*/$'%`\n  - `*-"0-`\n  - `#***`\n  - `(6#5!$3!`\n  - `5!0$'!6`\n  - `)$%!&(!%**`\n\n### TRAINING.PAK\n- Tamanho: 605,072 bytes\n- SHA-256: `17a085c74d9d50245dbc47b04db12245a6cc5c39a192f1de21f4473ae4a97738`\n- Entropia global: 3.8308 bits/byte\n- Primeiros 128 bytes (hex): `48 4a 4b 31 02 00 00 00 0e 00 00 00 00 00 00 00 45 4e 56 52 c0 00 00 00 30 00 00 00 54 45 58 52 f0 00 00 00 30 a7 06 00 4d 41 54 4c 20 a8 06 00 40 00 00 00 43 48 4e 4b 60 a8 06 00 90 0a 00 00 56 45 52 54 f0 b2 06 00 d0 a2 00 00 49 4e 44 58 c0 55 07 00 40 38 00 00 43 4f 4c 48 00 8e 07 00 20 00 00 00 43 4f 4c 47 20 8e 07 00 c0 bf 00 00 43 4f 4c 54 e0 4d 08 00 a0 a8 00 00 53 50 57 4e`\n- Primeiros 16 bytes (ASCII): `HJK1............`\n- Strings ASCII encontradas (mínimo 4 caracteres): 3538\n  - `HJK1`\n  - `ENVR`\n  - `TEXR`\n  - `MATL `\n  - `CHNK``\n  - `VERT`\n  - `INDX`\n  - `COLH`\n  - `COLG `\n  - `COLT`\n  - `SPWN`\n  - `NAVN`\n  - `NAVL`\n  - `UIMG`\n  - `RADR`\n  - `SA![`\n  - `f{>KzQkc[rLKL1`\n  - `st`Y||`\n  - `,wz^bFKe+BSV}|`atP`\n  - `ZbbzD^z`\n  - `hKQG5n"8d`\n  - `_m_}`<@`\n  - `VS[L`\n  - `XIOa`\n  - `u7\wV/^\C7 cS=`\n  - `s@m_`\n  - `|Spg`\n  - `]+bGM{V~`\n  - `W&b6`\n  - `\Ef^;q`\n  - `[V>Sr.KA`\n  - `.g__Hal`\n  - `QzwDx]z`\n  - `z.7*`\n  - `f:;V7`\n  - `[TCyC5`\n  - `iF>r`\n  - `o.x2`\n  - `VVfvM\D`\n  - `|tob{o`\n  - `VbwfzAeh`\n  - `qpBK9`\n  - `"^5J`\n  - `fcjR`\n  - `atlH`\n  - `NCNZq`\n  - `yVpE`\n  - `h^R7T`\n  - `slYOmm`\n  - `~[^j~V`\n  - `posY`\n  - `bQdb`\n  - `^qc9t`\n  - `a|s|;k`\n  - `Zke[rChwi`\n  - `P|0asg`\n  - `zySv`\n  - `6\ybRkg`\n  - `\U[q kS|_`\n  - `Ysahe`\n  - ``sml`\n  - `a{EzS^`\n  - `_XXs`\n  - `mYHt|sbAC+oR`\n  - `l|||`\n  - `RhQ2wz`\n  - `>oFG`\n  - `DbcCs`\n  - `=-eC`\n  - ``s_|}P|l`\n  - `>lXtt`\n  - ``lk\Kuj`\n  - `ru+uk^:`\n  - `NE[Q`\n  - `vwW"f`\n  - `yNG}`\n  - `|sY}t}`\n  - `r28.F~`\n  - `K]/db&`\n  - `m1b;]`\n\n
+# CrossStrike PS2 — análise e extração
+
+Gerado pelo GitHub Actions. Os arquivos originais não são modificados.
+As seções extraídas são blocos binários brutos; a identificação interna de cada formato será feita em etapas posteriores.
+
+## MAIN.ELF
+- Tamanho: 1,422,708 bytes
+- SHA-256: `bd31eba639e7b40c5fd8f9bcb9b4ff4ae5589192bb5215d1ea4e16bd16eb5056`
+- Entropia: 5.6142 bits/byte
+- Assinatura ELF: válida
+- Classe: 32-bit
+- Endian: little-endian
+- Machine: 8 (MIPS)
+- Entry point: `0x001031c8`
+- Program headers: 2; section headers: 15
+- Segmentos:
+  - 0: tipo=1879048195, offset=0x14f5c8, vaddr=0x23f5c8, arquivo=24, memória=24, válido=True
+  - 1: tipo=1, offset=0x10000, vaddr=0x100000, arquivo=1308168, memória=2317992, válido=True
+- Tabela de seções: cabeçalho detectado
+  - Offset: 0x15b31c; tamanho de entrada: 40; quantidade: 15
+- Strings ASCII (mínimo 5 caracteres): 4753
+### Strings relevantes
+- `Player`
+- `loadcore`
+- `thsemap`
+- `loadcore`
+- `loadcore`
+- `out of file descriptors`
+- `IO/File_Manager`
+- `loadcore`
+- `modload`
+- `load elf error`
+- `loadcore`
+- `thsemap`
+- `modload`
+- `loadcore`
+- `loadcore`
+- `thsemap`
+- `scan_change_bitmap`
+- `loadcore`
+- `thsemap`
+- `thsemap`
+- `usbmass_bd: ERROR: Failed to allocate I/O semaphore`
+- `loadcore`
+- `loadcore`
+- `thsemap`
+- `thsemap`
+- `ERROR: Couldn't get device descriptor`
+- `ERROR: Couldn't get configuration descriptor`
+- `PS2KBD: Error sending string descriptor request`
+- `loadcore`
+- `thsemap`
+- `ERROR: Couldn't get device descriptor`
+- `PS2MOUSE: Error sending string descriptor request`
+- `ERROR: Couldn't get configuration descriptor`
+- `loadcore`
+- `thsemap`
+- `dev9: SMAP initialization failed: %d`
+- `loadcore`
+- `thsemap`
+- `loadcore`
+- `SMAP: module already loaded`
+- `SMAP: smap_init -> %d`
+- `SMAP_driver`
+- `_smap_read_phy`
+- `SMAP: %s: > %u ms`
+- `_smap_write_phy`
+- `smap: %s: > %u ms`
+- `SMAP: restarting auto nego (BMCR=0x%x, BMSR=0x%x)`
+- `SMAP: Resetting PHY`
+- `SMAP: PHY reset error`
+- `SMAP: no auto mode (conf=0x%x)`
+- `SMAP: Waiting Valid Link for %dMbps`
+- `SMAP: no strap mode (conf=0x%x->0x%x, bmsr=0x%x)`
+- `SMAP: anar=0x%x->0x%x`
+- `SMAP: auto mode (BMCR=0x%x ANAR=0x%x)`
+- `SMAP: waiting valid link for 100Mbps Half-Duplex`
+- `SMAP: waiting valid link for 10Mbps Half-Duplex`
+- `SMAP: PHY: %04x %04x %04x %04x %04x %04x`
+- `SMAP: FCSCR=%d RECR=%d`
+- `SMAP: PHY chip: DP83846A%d`
+- `SMAP: %s %s Duplex Mode %s Flow Control`
+- `SMAP: WaitEventFlag -> %d`
+- `SMAP (%s)`
+- `Usage: smap [<option>] [thpri=<prio>] [thstack=<stack>] [<conf>]`
+- `smap: %s: %s - invalid digit`
+- `SMAP: CreateEventFlag -> %d`
+- `SMAP: CreateThread -> %d`
+- `smap: StartThread -> %d`
+- `smap: NetManRegisterNetIF -> %d`
+- `MAPS/%s.PAK`
+- `map=%d`
+- `UNDER THE MAP`
+- `RELOAD     %d.%d S A SHELL`
+- `RELOAD     %d.%d S`
+- `%d PLAYERS`
+- `pak_parse failed for %s`
+- `pak ok, textures + renderer`
+- `models`
+- `loading %s`
+- `ASSETS/%s`
+- `cannot load %s`
+- `ENEMY TEAM`
+- `SCORES / MAP`
+- `LOADING...`
+- `PROFILE`
+- `the top middle, or under the minimap.`
+- `WEAPONS`
+- `PLAYER        K    D`
+- `WAITING FOR PLAYERS  %d / %d`
+- `WELCOME TO MULTIPLAYER`
+- `THIS MAP HAS NO MAP`
+- `TRAINING.PAK NOT FOUND NEXT TO THE GAME`
+- `DOWNLOAD CANCELLED`
+- `[CLICK] NEXT PLAYER   [ESC] MENU`
+- `[X] NEXT PLAYER   [START] MENU`
+- `LOADING THE SERVER LIST...`
+- `DOWNLOADING %s`
+- `ENEMY FLAG`
+- `WAITING FOR PLAYERS`
+- `NOT ENOUGH MEMORY FOR THE SERVER MAP`
+- `THE SERVER MAP IS DAMAGED`
+- `THE SERVER MAP %.20s IS NOT IN THIS BUILD`
+- `Player`
+- `[B] WEAPONS`
+- `[SELECT] WEAPONS`
+- `PRESS R TO RELOAD`
+- `PRESS [SQUARE] TO RELOAD`
+- `RELOADING`
+- `%d / %d PLAYERS`
+- `MULTIPLAYER`
+- `UP TO 16 PLAYERS`
+- `CROSS STRIKE  -  MULTIPLAYER`
+- `MAP         < %s >`
+- `ENEMY GUNS  < %s >`
+- `ENEMY TEAM  < %d >`
+- `%s PLAYERS ONLY`
+- `ASSETS/COMMON.PAK`
+- `COMMON.PAK`
+- `no COMMON.PAK: every map brings its own weapons, sounds and HUD`
+- `COMMON.PAK is damaged`
+- `COMMON.PAK: %u textures, %u models`
+- `THE ENEMY TEAM WINS`
+- `VOTE THE NEXT MAP`
+- `SERVER MAP`
+- `SWITCH WEAPON`
+- `RELOAD`
+- `R           RELOAD`
+- `SQUARE      RELOAD`
+- `Claude (Anthropic): code, 3D models, art`
+- `WEAPON SOUNDS AND EFFECTS`
+- `Thanks for their sounds to:`
+- `BoostSound`
+- `patchytherat (Freesound)`
+- `taure (Freesound)`
+- `SoundFX_exe`
+- `made with Fish Audio`
+- `The N E S W strip: at the top in the middle, or under the minimap.`
+- `How loud the others sound.`
+- `PLAYERS ONLINE`
+- `AUDIO`
+- `4 MAPS IN TURN`
+- `FLAT.PAK`
+- `ISLAND.PAK`
+- `KASBAH.PAK`
+- `OFFSHORE.PAK`
+- `SNOWFIELD.PAK`
+- `TRAINING.PAK`
+- `A map from an online server,`
+- `saved in the MAPS folder.`
+- `Fair fight for most players.`
+- `r_draw_mesh: mesh too big (%u verts, %u tris)`
+- `pak: missing section %s`
+- `pak: bad magic`
+- `pak: version %u, this build needs %u - regenerate the .PAK files`
+- `pak: bad %s`
+- `texture count`
+- `texture header`
+- `effect textures`
+- `material texture`
+- `model count`
+- `model`
+- `model vertices`
+- `model triangles`
+- `model texture`
+- `model indices`
+- `CHAR texture`
+- `emote sound`
+- `pak: PVSD does not match this pak, ignored`
+- `pak: %u textures, %u materials, %u chunks, %u collision tris, %u spawns%s`
+- `PLAYER          KILLS  DEATHS`
+- `MAPA        < %s >`
+- `Your team has fewer players`
+- `ESTE MAPA NO TIENE MAPA`
+- `ESTE MAPA NAO TEM MAPA`
+- `[CLICK] OPEN   [RIGHT CLICK] PREVIOUS MAP   [ENTER] PLAY`
+- `[CLIC] ABRIR   [CLIC DER.] MAPA ANTERIOR   [ENTER] JUGAR`
+- `[CLIQUE] ABRIR   [CLIQUE DIR.] MAPA ANTERIOR   [ENTER] JOGAR`
+- `[LEFT/RIGHT] MOVE   [UP/DOWN] MAP   [X] OPEN`
+- `[IZQ/DER] MOVER   [ARRIBA/ABAJO] MAPA   [X] ABRIR`
+- `[ESQ/DIR] MOVER   [CIMA/BAIXO] MAPA   [X] ABRIR`
+- `SELECT TAP  MAP`
+- `TOCA SELECT MAPA`
+- `TOQUE SELECT MAPA`
+- `M           MAP`
+- `M           MAPA`
+- `Pick your weapons.`
+- `NO PLAYER IS CALLED THAT`
+- `VOTA EL SIGUIENTE MAPA`
+- `XIMO MAPA`
+- `MAPA DEL SERVIDOR`
+- `MAPA DO SERVIDOR`
+- `BAJO EL MAPA`
+- `SOB O MAPA`
+- `arriba al centro, o bajo el minimapa.`
+- `em cima no centro, ou sob o minimapa.`
+- `La tira N E S O: arriba al centro, o bajo el minimapa.`
+- `A faixa N L S O: em cima no centro, ou sob o minimapa.`
+- `PLAYERS %d`
+- `PUNTOS / MAPA`
+- `PLACAR / MAPA`
+- `SOUNDS`
+- `hecha con Fish Audio`
+- `feita com Fish Audio`
+- `digo, modelos 3D, arte`
+- `Free sound effects: guns, reload, empty gun`
+- `4 MAPAS POR TURNOS`
+- `4 MAPAS EM ROTA`
+- `THE ENEMY FLAG WAS DROPPED`
+- `THE ENEMY TOOK YOUR FLAG`
+- `YOUR TEAM HAS THE ENEMY FLAG`
+- `THE ENEMY FLAG IS BACK AT THEIR BASE`
+- `THE ENEMY CAPTURED YOUR FLAG`
+- `PS2 PLAYERS ONLY`
+- `PC PLAYERS ONLY`
+- `WII PLAYERS ONLY`
+- `Wii PLAYERS ONLY`
+- `PS3 PLAYERS ONLY`
+- `THE PLAYERS JOIN IT FROM THE TOURNEYS TAB`
+- `LOADED  (ENTER: ANOTHER)`
+- `(NONE)  ENTER: PICK A FILE`
+- `PICTURE UPLOADED`
+- `UPLOADING THE PICTURE...`
+- `NOBODY YET: THE PLAYERS JOIN FROM THE TOURNEYS TAB`
+- `PLAYER REMOVED`
+- `[CLICK] A PLAYER: REMOVE   [CLICK] START   [ESC] BACK`
+- `[CLICK] A PLAYER: REMOVE   [CLICK] START   [ESC] CLOSE THE TOURNEY`
+- `A PLAYER LEFT: THE COUNTDOWN STOPPED`
+- `[CLICK] A PLAYER, THEN A PLACE: MOVE   [CLICK IT AGAIN] REMOVE`
+- `[F] FREE [G] CHASE [E] EYES [N/B] PLAYER [H] PANEL [X] NAMES [O] OUTLINE [T] TRAILS [+/-] DISTANCE`
+- `FREE CAMERA`
+- `[F] FREE  [G] CHASE  [E] EYES  [N/B] PLAYER  [1-9]  [H] OVERLAY  [X] NAMES  [M] MAP`
+- `[F] LIBRE  [G] SEGUIR  [E] OJOS  [N/B] JUGADOR  [1-9]  [H] PANEL  [X] NOMBRES  [M] MAPA`
+- `[F] LIVRE  [G] SEGUIR  [E] OLHOS  [N/B] JOGADOR  [1-9]  [H] PAINEL  [X] NOMES  [M] MAPA`
+- `[TRIANGLE] CAMERA  [L1/R1] PLAYER  [SQUARE] OVERLAY`
+- `UP TO %d PLAYERS`
+- `%d PLAYERS  -  BOTS: %s`
+- `PLAYERS     < %d >`
+- `THE ISLAND  -  %d PLAYERS  -  LAST ONE STANDING`
+- `Un mapa de un servidor online,`
+- `Um mapa de um servidor online,`
+- `guardado en la carpeta MAPS.`
+- `salvo na pasta MAPS.`
+- `The map arrived damaged`
+- `The map download stalled`
+- `usb: no answer: resetting the IOP and loading the drivers again`
+- `modules done, audio %s`
+- `smap.irx`
+- `net: driver did not load`
+- `MAPS/`
+- `ASSETS/`
+- `video: gsKit init (the screen switches to the loading bar)`
+
+## PAKs e seções extraídas
+### COMMON.PAK
+- Tamanho: 5,377,440 bytes
+- SHA-256: `db293ae215aa0ac3de58c6695f095fb37b231a46ae49f3b6edf7fcaabfafa248`
+- Assinatura: HJK1; versão: 2; seções declaradas: 15
+- Fim da tabela: 0xc4
+- 00 `ENVR`: offset=0xd0, tamanho=48, válido=True
+- 01 `TEXR`: offset=0x100, tamanho=2197456, válido=True
+- 02 `MATL`: offset=0x2188d0, tamanho=16, válido=True
+- 03 `CHNK`: offset=0x2188e0, tamanho=208, válido=True
+- 04 `VERT`: offset=0x2189b0, tamanho=96, válido=True
+- 05 `INDX`: offset=0x218a10, tamanho=16, válido=True
+- 06 `COLH`: offset=0x218a20, tamanho=32, válido=True
+- 07 `COLG`: offset=0x218a40, tamanho=64, válido=True
+- 08 `COLT`: offset=0x218a80, tamanho=48, válido=True
+- 09 `SPWN`: offset=0x218ab0, tamanho=32, válido=True
+- 10 `NAVN`: offset=0x218ad0, tamanho=80, válido=True
+- 11 `NAVL`: offset=0x218b20, tamanho=32, válido=True
+- 12 `UIMG`: offset=0x218b40, tamanho=448, válido=True
+- 13 `MODL`: offset=0x218d00, tamanho=2848160, válido=True
+- 14 `SNDS`: offset=0x4d02a0, tamanho=330496, válido=True
+- Seções extraídas com sucesso: 15/15
+- Pasta: `samples/cross-strike/analysis/extracted/COMMON/`
+
+### FLAT.PAK
+- Tamanho: 776,832 bytes
+- SHA-256: `503932440cd7d8604a3eebb1a8d153520c4e7aaaff61f1942841f050d304b9ac`
+- Assinatura: HJK1; versão: 2; seções declaradas: 14
+- Fim da tabela: 0xb8
+- 00 `ENVR`: offset=0xc0, tamanho=48, válido=True
+- 01 `TEXR`: offset=0xf0, tamanho=366256, válido=True
+- 02 `MATL`: offset=0x597a0, tamanho=32, válido=True
+- 03 `CHNK`: offset=0x597c0, tamanho=4528, válido=True
+- 04 `VERT`: offset=0x5a970, tamanho=73408, válido=True
+- 05 `INDX`: offset=0x6c830, tamanho=13728, válido=True
+- 06 `COLH`: offset=0x6fdd0, tamanho=32, válido=True
+- 07 `COLG`: offset=0x6fdf0, tamanho=271280, válido=True
+- 08 `COLT`: offset=0xb21a0, tamanho=41184, válido=True
+- 09 `SPWN`: offset=0xbc280, tamanho=272, válido=True
+- 10 `NAVN`: offset=0xbc390, tamanho=3088, válido=True
+- 11 `NAVL`: offset=0xbcfa0, tamanho=2544, válido=True
+- 12 `UIMG`: offset=0xbd990, tamanho=224, válido=True
+- 13 `RADR`: offset=0xbda70, tamanho=16, válido=True
+- Seções extraídas com sucesso: 14/14
+- Pasta: `samples/cross-strike/analysis/extracted/FLAT/`
+
+### ISLAND.PAK
+- Tamanho: 3,358,608 bytes
+- SHA-256: `30ede119df7b98cf924d27b42bb0c8a9ef67bf0cda5d44ffe7c18b045506e946`
+- Assinatura: HJK1; versão: 2; seções declaradas: 15
+- Fim da tabela: 0xc4
+- 00 `ENVR`: offset=0xd0, tamanho=48, válido=True
+- 01 `TEXR`: offset=0x100, tamanho=418576, válido=True
+- 02 `MATL`: offset=0x66410, tamanho=48, válido=True
+- 03 `CHNK`: offset=0x66440, tamanho=16144, válido=True
+- 04 `VERT`: offset=0x6a350, tamanho=1165408, válido=True
+- 05 `INDX`: offset=0x186bb0, tamanho=195776, válido=True
+- 06 `COLH`: offset=0x1b6870, tamanho=32, válido=True
+- 07 `COLG`: offset=0x1b6890, tamanho=821312, válido=True
+- 08 `COLT`: offset=0x27f0d0, tamanho=370304, válido=True
+- 09 `SPWN`: offset=0x2d9750, tamanho=272, válido=True
+- 10 `NAVN`: offset=0x2d9860, tamanho=20288, válido=True
+- 11 `NAVL`: offset=0x2de7a0, tamanho=19296, válido=True
+- 12 `SNDS`: offset=0x2e3300, tamanho=330496, válido=True
+- 13 `UIMG`: offset=0x333e00, tamanho=384, válido=True
+- 14 `RADR`: offset=0x333f80, tamanho=16, válido=True
+- Seções extraídas com sucesso: 15/15
+- Pasta: `samples/cross-strike/analysis/extracted/ISLAND/`
+
+### KASBAH.PAK
+- Tamanho: 698,304 bytes
+- SHA-256: `1021238f123bddccef5836da6a4939372f7a8a837e10bd8ac6f53b5ec63f06ae`
+- Assinatura: HJK1; versão: 2; seções declaradas: 15
+- Fim da tabela: 0xc4
+- 00 `ENVR`: offset=0xd0, tamanho=48, válido=True
+- 01 `TEXR`: offset=0x100, tamanho=436016, válido=True
+- 02 `MATL`: offset=0x6a830, tamanho=64, válido=True
+- 03 `CHNK`: offset=0x6a870, tamanho=4336, válido=True
+- 04 `VERT`: offset=0x6b960, tamanho=62448, válido=True
+- 05 `INDX`: offset=0x7ad50, tamanho=19104, válido=True
+- 06 `COLH`: offset=0x7f7f0, tamanho=32, válido=True
+- 07 `COLG`: offset=0x7f810, tamanho=111904, válido=True
+- 08 `COLT`: offset=0x9ad30, tamanho=57280, válido=True
+- 09 `SPWN`: offset=0xa8cf0, tamanho=272, válido=True
+- 10 `NAVN`: offset=0xa8e00, tamanho=3776, válido=True
+- 11 `NAVL`: offset=0xa9cc0, tamanho=2464, válido=True
+- 12 `UIMG`: offset=0xaa660, tamanho=224, válido=True
+- 13 `RADR`: offset=0xaa740, tamanho=16, válido=True
+- 14 `BARL`: offset=0xaa750, tamanho=112, válido=True
+- Seções extraídas com sucesso: 15/15
+- Pasta: `samples/cross-strike/analysis/extracted/KASBAH/`
+
+### OFFSHORE.PAK
+- Tamanho: 5,741,152 bytes
+- SHA-256: `eabde26584fbfa06f025d884e0dadc151ec7c2369a715d4db42917b1e9b4bbf4`
+- Assinatura: HJK1; versão: 2; seções declaradas: 17
+- Fim da tabela: 0xdc
+- 00 `ENVR`: offset=0xe0, tamanho=48, válido=True
+- 01 `TEXR`: offset=0x110, tamanho=2336976, válido=True
+- 02 `MATL`: offset=0x23a9e0, tamanho=80, válido=True
+- 03 `CHNK`: offset=0x23aa30, tamanho=7408, válido=True
+- 04 `VERT`: offset=0x23c720, tamanho=81792, válido=True
+- 05 `INDX`: offset=0x2506a0, tamanho=15776, válido=True
+- 06 `COLH`: offset=0x254440, tamanho=32, válido=True
+- 07 `COLG`: offset=0x254460, tamanho=73248, válido=True
+- 08 `COLT`: offset=0x266280, tamanho=35504, válido=True
+- 09 `SPWN`: offset=0x26ed30, tamanho=272, válido=True
+- 10 `NAVN`: offset=0x26ee40, tamanho=6240, válido=True
+- 11 `NAVL`: offset=0x2706a0, tamanho=4320, válido=True
+- 12 `SNDS`: offset=0x271780, tamanho=330496, válido=True
+- 13 `UIMG`: offset=0x2c2280, tamanho=416, válido=True
+- 14 `RADR`: offset=0x2c2420, tamanho=16, válido=True
+- 15 `MODL`: offset=0x2c2430, tamanho=2848160, válido=True
+- 16 `BARL`: offset=0x5799d0, tamanho=144, válido=True
+- Seções extraídas com sucesso: 17/17
+- Pasta: `samples/cross-strike/analysis/extracted/OFFSHORE/`
+
+### SNOWFIELD.PAK
+- Tamanho: 1,092,672 bytes
+- SHA-256: `9b9064c1b687fed44e6745d876bb78dcc0afed7a68a387b7b50efb9cb9ad45cd`
+- Assinatura: HJK1; versão: 2; seções declaradas: 15
+- Fim da tabela: 0xc4
+- 00 `ENVR`: offset=0xd0, tamanho=48, válido=True
+- 01 `TEXR`: offset=0x100, tamanho=470896, válido=True
+- 02 `MATL`: offset=0x73070, tamanho=80, válido=True
+- 03 `CHNK`: offset=0x730c0, tamanho=7696, válido=True
+- 04 `VERT`: offset=0x74ed0, tamanho=230368, válido=True
+- 05 `INDX`: offset=0xad2b0, tamanho=41424, válido=True
+- 06 `COLH`: offset=0xb7480, tamanho=32, válido=True
+- 07 `COLG`: offset=0xb74a0, tamanho=232848, válido=True
+- 08 `COLT`: offset=0xf0230, tamanho=99792, válido=True
+- 09 `SPWN`: offset=0x108800, tamanho=272, válido=True
+- 10 `NAVN`: offset=0x108910, tamanho=4864, válido=True
+- 11 `NAVL`: offset=0x109c10, tamanho=3696, válido=True
+- 12 `UIMG`: offset=0x10aa80, tamanho=416, válido=True
+- 13 `RADR`: offset=0x10ac20, tamanho=16, válido=True
+- 14 `SNOW`: offset=0x10ac30, tamanho=16, válido=True
+- Seções extraídas com sucesso: 15/15
+- Pasta: `samples/cross-strike/analysis/extracted/SNOWFIELD/`
+
+### TRAINING.PAK
+- Tamanho: 605,072 bytes
+- SHA-256: `17a085c74d9d50245dbc47b04db12245a6cc5c39a192f1de21f4473ae4a97738`
+- Assinatura: HJK1; versão: 2; seções declaradas: 14
+- Fim da tabela: 0xb8
+- 00 `ENVR`: offset=0xc0, tamanho=48, válido=True
+- 01 `TEXR`: offset=0xf0, tamanho=436016, válido=True
+- 02 `MATL`: offset=0x6a820, tamanho=64, válido=True
+- 03 `CHNK`: offset=0x6a860, tamanho=2704, válido=True
+- 04 `VERT`: offset=0x6b2f0, tamanho=41680, válido=True
+- 05 `INDX`: offset=0x755c0, tamanho=14400, válido=True
+- 06 `COLH`: offset=0x78e00, tamanho=32, válido=True
+- 07 `COLG`: offset=0x78e20, tamanho=49088, válido=True
+- 08 `COLT`: offset=0x84de0, tamanho=43168, válido=True
+- 09 `SPWN`: offset=0x8f680, tamanho=32, válido=True
+- 10 `NAVN`: offset=0x8f6a0, tamanho=9072, válido=True
+- 11 `NAVL`: offset=0x91a10, tamanho=8144, válido=True
+- 12 `UIMG`: offset=0x939e0, tamanho=416, válido=True
+- 13 `RADR`: offset=0x93b80, tamanho=16, válido=True
+- Seções extraídas com sucesso: 14/14
+- Pasta: `samples/cross-strike/analysis/extracted/TRAINING/`
+
