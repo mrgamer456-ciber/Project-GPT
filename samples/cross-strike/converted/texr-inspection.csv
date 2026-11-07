@@ -1,0 +1,8 @@
+pak,source_bin,size,sha256,untouched_copy,detected_images
+COMMON,TEXR_01.bin,2197456,23a7ed73561b3b472d25bfdc1e7907cc244f69ee76ef938e44c1d01c6dc2b94e,samples/cross-strike/converted/original-bin-copies/COMMON_TEXR_01.bin,4
+FLAT,TEXR_01.bin,366256,f44f42b2899a42578deb3decd70cae051057c2599b3f21e7487a51fd021fc953,samples/cross-strike/converted/original-bin-copies/FLAT_TEXR_01.bin,0
+ISLAND,TEXR_01.bin,418576,3bd4da36df2218c777b699df88adce31f11e66d48255e5b2a89d7c28db2e93f7,samples/cross-strike/converted/original-bin-copies/ISLAND_TEXR_01.bin,0
+KASBAH,TEXR_01.bin,436016,4a7968fb181995e0132be3ab9e45194a97fec469d592085fcd1f8e0a1dcaefeb,samples/cross-strike/converted/original-bin-copies/KASBAH_TEXR_01.bin,0
+OFFSHORE,TEXR_01.bin,2336976,3f91806a4beba4e2e7d727e6945837925f13d75d81fa9ccb09313c2ab1af1d24,samples/cross-strike/converted/original-bin-copies/OFFSHORE_TEXR_01.bin,4
+SNOWFIELD,TEXR_01.bin,470896,cd02a24150e3594588b1ff2518afd5b0ab9c462d2005e127719a4d3bce18747f,samples/cross-strike/converted/original-bin-copies/SNOWFIELD_TEXR_01.bin,0
+TRAINING,TEXR_01.bin,436016,6a413dc9699866935dfe27f6120ee10e5d647b8577e1634788e04864ae6fdfad,samples/cross-strike/converted/original-bin-copies/TRAINING_TEXR_01.bin,0
