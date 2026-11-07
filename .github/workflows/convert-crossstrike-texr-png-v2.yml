@@ -1,0 +1,136 @@
+name: Convert all CrossStrike TEXR with proven indexed palette layout
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Convert TEXR using the layout that produced the readable font
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet Pillow
+          python3 <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import csv, hashlib, struct
+
+          src_root = Path("samples/cross-strike/analysis/extracted")
+          out_root = Path("samples/cross-strike/converted/png-candidates-v2")
+          out_root.mkdir(parents=True, exist_ok=True)
+
+          # Known successful COMMON font candidate:
+          # 256 RGBA palette at 0x40, 8-bit pixel indices at 0x540.
+          palette_offset = 0x40
+          pixel_offset = 0x540
+          dimensions = (128, 256)
+          areas = ("COMMON", "FLAT", "ISLAND", "KASBAH", "OFFSHORE", "SNOWFIELD", "TRAINING")
+
+          rows = []
+          report = [
+              "# CrossStrike TEXR PNG candidates — proven layout",
+              "",
+              "This workflow reuses the indexed8 layout that produced the readable COMMON font candidate.",
+              "Palette: 256 RGBA entries at offset 0x40. Pixel indices: offset 0x540.",
+              "Original BIN files are read-only. These PNGs are experimental interpretations, not confirmed final game textures.",
+              "",
+              "| Area | Source BIN | Dimensions | Variant | PNG |",
+              "|---|---|---:|---|---|",
+          ]
+
+          for area in areas:
+              folder = src_root / area
+              src = folder / "TEXR_01.bin"
+              if not src.is_file():
+                  report.append(f"| {area} | Missing TEXR_01.bin | — | — | — |")
+                  continue
+
+              data = src.read_bytes()
+              if len(data) < pixel_offset:
+                  report.append(f"| {area} | TEXR_01.bin | — | Too small for known layout | — |")
+                  continue
+
+              palette = [tuple(data[i:i+4]) for i in range(palette_offset, palette_offset + 1024, 4)]
+              if len(palette) != 256:
+                  raise RuntimeError(f"{area}: palette is incomplete")
+
+              texture_count = struct.unpack_from("<I", data, 0)[0] if len(data) >= 4 else 0
+              report += [
+                  f"## {area}",
+                  f"- Source size: {len(data):,} bytes",
+                  f"- SHA-256: {hashlib.sha256(data).hexdigest()}",
+                  f"- First uint32 LE (possible texture count): {texture_count}",
+                  "",
+              ]
+
+              for size in dimensions:
+                  needed = size * size
+                  end = pixel_offset + needed
+                  if end > len(data):
+                      report.append(f"- {size}x{size}: skipped (not enough bytes)")
+                      continue
+
+                  indices = data[pixel_offset:end]
+                  rgba = [palette[index] for index in indices]
+                  base = Image.new("RGBA", (size, size))
+                  base.putdata(rgba)
+
+                  variants = {
+                      "original": base,
+                      "bright_rgb": base.point(
+                          lambda value: min(255, round(value * 1.18))
+                          if value <= 255 else 255
+                      ),
+                      "opaque": Image.new("RGBA", (size, size)),
+                  }
+                  # Preserve RGB while making alpha fully opaque for comparison.
+                  variants["opaque"].putdata([(r, g, b, 255) for r, g, b, a in rgba])
+
+                  for variant, image in variants.items():
+                      name = f"{area}_TEXR_01_indexed8_{size}x{size}_{variant}_pal0040_pix0540.png"
+                      target = out_root / name
+                      image.save(target, format="PNG", optimize=True)
+                      rows.append([area, src.name, size, size, variant, f"0x{palette_offset:04x}", f"0x{pixel_offset:04x}", name, target.stat().st_size])
+                      report.append(f"| {area} | {src.name} | {size}x{size} | {variant} | [{name}]({name}) |")
+
+          if not rows:
+              raise SystemExit("No TEXR candidates were generated.")
+
+          with (out_root / "index.csv").open("w", newline="", encoding="utf-8") as handle:
+              writer = csv.writer(handle)
+              writer.writerow(["area", "source_bin", "width", "height", "variant", "palette_offset", "pixel_offset", "png", "png_bytes"])
+              writer.writerows(rows)
+
+          (out_root / "README.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+          print("\n".join(report))
+          print(f"Generated {len(rows)} PNG candidates.")
+          PY
+
+      - name: Commit PNG candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/converted/png-candidates-v2
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Convert all CrossStrike TEXR with proven indexed layout"
+            git push
+          fi
+
+      - name: Upload PNG candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-TEXR-PNG-candidates-v2
+          path: samples/cross-strike/converted/png-candidates-v2/
+          if-no-files-found: error
+          retention-days: 14
