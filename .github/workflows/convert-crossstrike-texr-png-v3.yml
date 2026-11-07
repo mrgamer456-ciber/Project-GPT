@@ -24,7 +24,9 @@ jobs:
 
           src_root = Path("samples/cross-strike/analysis/extracted")
           out_root = Path("samples/cross-strike/converted/png-candidates-v3")
+          edit_root = Path("samples/cross-strike/textures-to-edit")
           out_root.mkdir(parents=True, exist_ok=True)
+          edit_root.mkdir(parents=True, exist_ok=True)
 
           areas = ("COMMON", "FLAT", "ISLAND", "KASBAH", "OFFSHORE", "SNOWFIELD", "TRAINING")
           global_header = 0x10
@@ -93,6 +95,8 @@ jobs:
                   filename = f"{area}_TEXR_{index+1:03d}.png"
                   target = area_out / filename
                   original.save(target, format="PNG", optimize=True)
+                  # Also place a clean, flat copy in one folder for easy editing.
+                  original.save(edit_root / filename, format="PNG", optimize=True)
                   rows.append([
                       area, index + 1, f"0x{start:08x}", f"0x{pal_start:08x}",
                       f"0x{pix_start:08x}", width, height, "original", f"{area}/{filename}",
@@ -151,7 +155,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add samples/cross-strike/converted/png-candidates-v3
+          git add samples/cross-strike/converted/png-candidates-v3 samples/cross-strike/textures-to-edit
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
@@ -163,6 +167,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CrossStrike-all-TEXR-textures-v3
-          path: samples/cross-strike/converted/png-candidates-v3/
+          path: |
+            samples/cross-strike/converted/png-candidates-v3/
+            samples/cross-strike/textures-to-edit/
           if-no-files-found: error
           retention-days: 14
