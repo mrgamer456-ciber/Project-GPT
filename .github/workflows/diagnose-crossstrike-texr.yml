@@ -1,0 +1,131 @@
+name: Diagnose CrossStrike TEXR headers and palettes
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inspect record headers, palettes and pixel-index patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import csv, hashlib, struct
+
+          root = Path("samples/cross-strike/analysis/extracted")
+          out = Path("samples/cross-strike/analysis/texr-diagnostics")
+          out.mkdir(parents=True, exist_ok=True)
+
+          areas = ("COMMON", "FLAT", "ISLAND", "KASBAH", "OFFSHORE", "SNOWFIELD", "TRAINING")
+          GLOBAL = 0x10
+          RECORD = 0x4420
+          PALETTE_REL = 0x10
+          PIXELS_REL = 0x410
+          PIXEL_COUNT = 128 * 128
+          rows = []
+          report = [
+              "# CrossStrike TEXR diagnostics",
+              "",
+              "Read-only inspection. No source BIN or PNG is modified.",
+              "",
+              "This report checks the 16-byte per-record header that the current PNG exporter skips,",
+              "plus palette channel ranges and indexed-pixel usage. It does not assume that the current",
+              "linear pixel order or RGBA palette interpretation is correct.",
+              "",
+          ]
+
+          for area in areas:
+              path = root / area / "TEXR_01.bin"
+              if not path.exists():
+                  report += [f"## {area}", "- TEXR file missing", ""]
+                  continue
+              data = path.read_bytes()
+              count = struct.unpack_from("<I", data, 0)[0]
+              report += [f"## {area}", f"- File bytes: {len(data)}", f"- Texture count: {count}",
+                         f"- SHA-256: {hashlib.sha256(data).hexdigest()}", ""]
+              for i in range(count):
+                  start = GLOBAL + i * RECORD
+                  rec_header = data[start:start+0x10]
+                  pal = data[start+PALETTE_REL:start+PALETTE_REL+1024]
+                  pix = data[start+PIXELS_REL:start+PIXELS_REL+PIXEL_COUNT]
+                  colors = [tuple(pal[j:j+4]) for j in range(0, 1024, 4)]
+                  used = len(set(pix))
+                  channels = list(zip(*colors))
+                  mins = [min(c) for c in channels]
+                  maxs = [max(c) for c in channels]
+                  alphas = sorted(set(channels[3]))
+                  head_hex = rec_header.hex()
+                  vals16 = struct.unpack("<8H", rec_header)
+                  vals32 = struct.unpack("<4I", rec_header)
+                  rows.append([
+                      area, i+1, f"0x{start:08x}", head_hex,
+                      *[f"0x{x:04x}" for x in vals16],
+                      *[f"0x{x:08x}" for x in vals32],
+                      used, *mins, *maxs, ";".join(map(str, alphas)),
+                      len(set(pix[:2048])), len(set(pix[2048:4096]))
+                  ])
+              # Show first 12 records in detail; CSV contains every record.
+              report += ["| Texture | 16-byte header (hex) | Unique indices | Palette RGBA min | Palette RGBA max | Alpha values |",
+                         "|---:|---|---:|---|---|---|"]
+              for i in range(min(count, 12)):
+                  start = GLOBAL + i * RECORD
+                  h = data[start:start+0x10].hex()
+                  pal = data[start+PALETTE_REL:start+PALETTE_REL+1024]
+                  pix = data[start+PIXELS_REL:start+PIXELS_REL+PIXEL_COUNT]
+                  colors = [tuple(pal[j:j+4]) for j in range(0, 1024, 4)]
+                  ch = list(zip(*colors))
+                  mins = ",".join(str(min(c)) for c in ch)
+                  maxs = ",".join(str(max(c)) for c in ch)
+                  alpha = ",".join(map(str, sorted(set(ch[3]))))
+                  report.append(f"| {i+1} | `{h}` | {len(set(pix))} | {mins} | {maxs} | {alpha} |")
+              report.append("")
+
+          csv_path = out / "record-header-palette-report.csv"
+          with csv_path.open("w", newline="", encoding="utf-8") as f:
+              w = csv.writer(f)
+              w.writerow([
+                  "area", "texture", "record_offset", "header_hex",
+                  *[f"header_u16_{i}" for i in range(8)],
+                  *[f"header_u32_{i}" for i in range(4)],
+                  "unique_pixel_indices", "palette_r_min", "palette_g_min",
+                  "palette_b_min", "palette_a_min", "palette_r_max",
+                  "palette_g_max", "palette_b_max", "palette_a_max",
+                  "palette_alpha_values", "unique_indices_first_2048",
+                  "unique_indices_next_2048"
+              ])
+              w.writerows(rows)
+
+          (out / "README.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+          print("\n".join(report))
+          print(f"Inspected {len(rows)} TEXR records. Full CSV: {csv_path}")
+          PY
+
+      - name: Commit diagnostic report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/analysis/texr-diagnostics
+          if git diff --cached --quiet; then
+            echo "No diagnostic changes."
+          else
+            git commit -m "Add read-only CrossStrike TEXR diagnostics"
+            git push
+          fi
+
+      - name: Upload diagnostic report
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-TEXR-diagnostics
+          path: samples/cross-strike/analysis/texr-diagnostics/
+          if-no-files-found: error
+          retention-days: 14
