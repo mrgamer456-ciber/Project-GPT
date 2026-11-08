@@ -26,7 +26,7 @@
 </main>
 <script>
 const $=id=>document.getElementById(id);
-let report='',currentJob=0,readBytes=0;
+let report='',currentJob=0;
 const u16=(v,o)=>v.getUint16(o,true),u32=(v,o)=>v.getUint32(o,true);
 const fmt=n=>n.toLocaleString('pt-BR')+' bytes';
 const MAX_IMAGES=4096;
@@ -37,13 +37,13 @@ async function readRange(file,offset,length){
  if(!Number.isSafeInteger(offset)||!Number.isSafeInteger(length)||offset<0||length<0||offset>file.size||length>file.size-offset)throw Error('Intervalo de leitura fora do arquivo (offset '+offset+', tamanho '+length+').');
  const buffer=await file.slice(offset,offset+length).arrayBuffer();
  if(buffer.byteLength!==length)throw Error('Leitura incompleta no offset '+offset+'.');
- readBytes+=buffer.byteLength;
  return {bytes:new Uint8Array(buffer),view:new DataView(buffer)};
 }
 async function parse(file,job){
- const issues=[],pics=[];
+ const issues=[],pics=[];let bytesRead=0;
  if(file.size<16)throw Error('Arquivo pequeno demais: o cabeçalho TIM2 precisa de pelo menos 16 bytes.');
  const main=await readRange(file,0,16);
+ bytesRead+=main.bytes.length;
  if(job!==currentJob)return;
  const b=main.bytes,v=main.view;
  const magic=String.fromCharCode(...b.slice(0,4));
@@ -59,6 +59,7 @@ async function parse(file,job){
    for(let i=0;i<imageCount;i++){
     if(pos>file.size||file.size-pos<48){issues.push('Imagem '+(i+1)+': cabeçalho de 48 bytes incompleto no offset '+pos+'.');break;}
     const part=await readRange(file,pos,48);
+    bytesRead+=part.bytes.length;
     if(job!==currentJob)return;
     const p=part.bytes,w=part.view;
     const totalSize=u32(w,0),clutSize=u32(w,4),imageSize=u32(w,8),headerSize=u16(w,12),clutColors=u16(w,14);
@@ -87,7 +88,7 @@ async function parse(file,job){
  if(job!==currentJob)return;
  const versionLabel='0x'+version.toString(16).padStart(2,'0');
  $('stats').innerHTML='';
- stat('Arquivo',file.name);stat('Tamanho total',fmt(file.size));stat('Bytes lidos',fmt(readBytes));stat('Assinatura',magic);stat('Versão',versionLabel);stat('Format ID','0x'+formatId.toString(16).padStart(2,'0'));stat('Imagens declaradas',String(imageCount));stat('Imagens analisadas',String(pics.length));
+ stat('Arquivo',file.name);stat('Tamanho total',fmt(file.size));stat('Bytes lidos',fmt(bytesRead));stat('Assinatura',magic);stat('Versão',versionLabel);stat('Format ID','0x'+formatId.toString(16).padStart(2,'0'));stat('Imagens declaradas',String(imageCount));stat('Imagens analisadas',String(pics.length));
  $('summary').textContent=issues.length?'Atenção: '+issues.join(' '):'Cabeçalho principal e limites dos cabeçalhos de imagem parecem coerentes. Somente os metadados foram lidos; isso não confirma que os pixels possam ser decodificados.';
  $('pictures').innerHTML='';
  const rows=[];
@@ -100,14 +101,14 @@ async function parse(file,job){
   rows.push('Imagem '+p.index+':\n  Cabeçalho offset: '+p.pos+'\n  Tamanho total: '+p.totalSize+'\n  Header size: '+p.headerSize+'\n  Dimensões: '+p.width+' x '+p.height+'\n  Picture format: '+p.pictureFormat+'\n  GS TEX0 (parte baixa): 0x'+p.gsTex0Low.toString(16)+'\n  PSM: '+p.psm+' ('+format+')\n  Tipo de imagem: '+p.imageType+' ('+(imageTypes[p.imageType]||'desconhecido')+')\n  Mipmaps: '+p.mipmapCount+'\n  Image data: offset '+p.imageOffset+', '+p.imageSize+' bytes\n  CLUT: offset '+p.clutOffset+', '+p.clutSize+' bytes; '+p.clutColors+' cores; valor bruto 0x'+p.clutType.toString(16).padStart(2,'0')+'; decodificação detalhada pendente\n  Validação: '+(valid?'OK':p.reasons.join('; ')));
  }
  $('tableNote').textContent=pics.length?'O PSM é extraído dos bits de formato do registrador GS TEX0. A ferramenta lê metadados em pequenos blocos; não carrega nem converte os pixels para PNG.':'Nenhum cabeçalho de imagem completo foi encontrado.';
- $('details').textContent='TIM2 HEADER\nVersão: '+versionLabel+'\nFormat ID: 0x'+formatId.toString(16).padStart(2,'0')+'\nAlinhamento inicial: '+(formatId===0?'16 bytes':formatId===1?'128 bytes':'não reconhecido')+'\nNúmero de imagens: '+imageCount+'\nReserved 0: 0x'+headerReserved.toString(16)+'\nReserved 1: 0x'+headerReserved2.toString(16)+'\nBytes lidos: '+readBytes+' de '+file.size+'\n\n'+(rows.join('\n\n')||'Nenhum detalhe de imagem disponível.')+'\n\nAVISOS\n'+(issues.length?issues.map(x=>'• '+x).join('\n'):'Nenhuma inconsistência estrutural básica detectada.')+'\n\nLIMITAÇÃO\nA ferramenta lê somente o cabeçalho principal e os cabeçalhos de imagem de 48 bytes. Valida campos básicos e limites declarados; não valida swizzling, alinhamento GS, paletas em detalhe nem decodifica a imagem.';
- report='PROJECT-GPT — PS2 TIM2 TEXTURE INSPECTOR\nArquivo: '+file.name+'\nTamanho: '+file.size+' bytes\nBytes lidos: '+readBytes+'\nVersão: '+versionLabel+'\nFormat ID: 0x'+formatId.toString(16).padStart(2,'0')+'\nImagens declaradas: '+imageCount+'\nImagens analisadas: '+pics.length+'\n\n'+$('details').textContent;
+ $('details').textContent='TIM2 HEADER\nVersão: '+versionLabel+'\nFormat ID: 0x'+formatId.toString(16).padStart(2,'0')+'\nAlinhamento inicial: '+(formatId===0?'16 bytes':formatId===1?'128 bytes':'não reconhecido')+'\nNúmero de imagens: '+imageCount+'\nReserved 0: 0x'+headerReserved.toString(16)+'\nReserved 1: 0x'+headerReserved2.toString(16)+'\nBytes lidos: '+bytesRead+' de '+file.size+'\n\n'+(rows.join('\n\n')||'Nenhum detalhe de imagem disponível.')+'\n\nAVISOS\n'+(issues.length?issues.map(x=>'• '+x).join('\n'):'Nenhuma inconsistência estrutural básica detectada.')+'\n\nLIMITAÇÃO\nA ferramenta lê somente o cabeçalho principal e os cabeçalhos de imagem de 48 bytes. Valida campos básicos e limites declarados; não valida swizzling, alinhamento GS, paletas em detalhe nem decodifica a imagem.';
+ report='PROJECT-GPT — PS2 TIM2 TEXTURE INSPECTOR\nArquivo: '+file.name+'\nTamanho: '+file.size+' bytes\nBytes lidos: '+bytesRead+'\nVersão: '+versionLabel+'\nFormat ID: 0x'+formatId.toString(16).padStart(2,'0')+'\nImagens declaradas: '+imageCount+'\nImagens analisadas: '+pics.length+'\n\n'+$('details').textContent;
  $('results').classList.remove('hidden');$('status').textContent='Análise concluída. Foram lidos apenas os metadados.';
 }
 async function load(file){
  if(!file)return;
  const job=++currentJob;
- report='';readBytes=0;$('results').classList.add('hidden');$('status').textContent='Lendo somente os cabeçalhos de '+file.name+'…';
+ report='';$('results').classList.add('hidden');$('status').textContent='Lendo somente os cabeçalhos de '+file.name+'…';
  try{await parse(file,job)}catch(e){if(job===currentJob){$('status').textContent='Não foi possível analisar: '+e.message;$('results').classList.add('hidden')}}
 }
 $('drop').addEventListener('click',e=>{if(e.target.tagName!=='INPUT')$('file').click()});
@@ -117,5 +118,5 @@ $('file').addEventListener('change',e=>load(e.target.files[0]));
 $('drop').addEventListener('drop',e=>{const file=e.dataTransfer.files[0];if(file)load(file)});
 $('download').onclick=()=>{if(!report)return;const a=document.createElement('a'),u=URL.createObjectURL(new Blob([report],{type:'text/plain;charset=utf-8'}));a.href=u;a.download='tim2-inspection.txt';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
 $('copy').onclick=()=>{if(report)navigator.clipboard.writeText(report).then(()=>$('status').textContent='Relatório copiado.').catch(()=>$('status').textContent='Não foi possível copiar neste navegador.')};
-$('clear').onclick=()=>{currentJob++;$('file').value='';$('results').classList.add('hidden');$('status').textContent='Aguardando arquivo…';report='';readBytes=0};
+$('clear').onclick=()=>{currentJob++;$('file').value='';$('results').classList.add('hidden');$('status').textContent='Aguardando arquivo…';report=''};
 </script></body></html>
