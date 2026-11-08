@@ -69,7 +69,11 @@ A pasta `samples/cross-strike/` reúne uma amostra ZIP, arquivos PS2 extraídos 
 
 ### Workflows do Cross Strike
 
-Os nove workflows em `.github/workflows/` são iniciados manualmente (`workflow_dispatch`). Eles têm permissão `contents: write` porque alguns publicam os resultados gerados com commit e push para `main`. Execute-os somente quando quiser atualizar esses resultados; esta documentação não os executa automaticamente.
+Os workflows em `.github/workflows/` são iniciados manualmente (`workflow_dispatch`). Alguns têm permissão `contents: write` e publicam resultados gerados com commit e push para `main`; confira o arquivo do workflow antes de executá-lo, pois o nome nem sempre indica se ele altera o repositório. Execute-os somente quando quiser atualizar esses resultados; esta documentação não os executa automaticamente.
+
+### PAK combinado experimental
+
+`merged/CROSSSTRIKE_ALL.PAK` reúne as 105 seções dos sete PAKs originais. `merged/EXTRACTION-VERIFICATION.md` registra a comparação byte a byte dos 105 blocos extraídos. Isso valida a integridade estrutural e dos dados, mas **não confirma compatibilidade com o carregador do jogo**; mantenha os sete PAKs originais.
 
 ### Aviso sobre distribuição
 
