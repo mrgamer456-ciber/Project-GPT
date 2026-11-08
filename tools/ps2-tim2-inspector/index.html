@@ -28,7 +28,7 @@
 const $=id=>document.getElementById(id);let report='';
 const u16=(v,o)=>v.getUint16(o,true),u32=(v,o)=>v.getUint32(o,true);
 const fmt=n=>n.toLocaleString('pt-BR')+' bytes';
-const psmNames={0:'PSMCT32 (32-bit)',1:'PSMCT24 (24-bit)',2:'PSMCT16 (16-bit)',10:'PSMCT16S (16-bit signed)',19:'PSMT8 (8-bit indexed)',20:'PSMT4 (4-bit indexed)',27:'PSMT8H (8-bit indexed high)',36:'PSMT4HL (4-bit indexed high/low)',44:'PSMT4HH (4-bit indexed high)',48:'PSMZ32 (depth 32-bit)',49:'PSMZ24 (depth 24-bit)',50:'PSMZ16 (depth 16-bit)',58:'PSMZ16S (depth 16-bit signed)'};
+const psmNames={0:'PSMCT32 (32-bit)',1:'PSMCT24 (24-bit)',2:'PSMCT16 (16-bit)',10:'PSMCT16S (16-bit signed)',19:'PSMT8 (8-bit indexed)',20:'PSMT4 (4-bit indexed)',27:'PSMT8H (8-bit indexed high)',26:'PSMT4HL (4-bit indexed high/low)',44:'PSMT4HH (4-bit indexed high)',48:'PSMZ32 (depth 32-bit)',49:'PSMZ24 (depth 24-bit)',50:'PSMZ16 (depth 16-bit)',58:'PSMZ16S (depth 16-bit signed)'};
 const imageTypes={0:'Indefinido',1:'16-bit RGBA',2:'32-bit RGB',3:'32-bit RGBA',4:'4-bit indexado',5:'8-bit indexado'};
 function stat(k,v){let d=document.createElement('div');d.className='stat';let s=document.createElement('small');s.textContent=k;let b=document.createElement('strong');b.textContent=v;d.append(s,b);$('stats').append(d)}
 function parse(file,buffer){
