@@ -71,7 +71,7 @@ A pasta `samples/cross-strike/` reúne uma amostra ZIP, arquivos PS2 extraídos 
 
 ### Workflows do Cross Strike
 
-Os workflows em `.github/workflows/` são iniciados manualmente (`workflow_dispatch`). Alguns têm permissão `contents: write` e publicam resultados gerados com commit e push para `main`; confira o arquivo do workflow antes de executá-lo, pois o nome nem sempre indica se ele altera o repositório. Execute-os somente quando quiser atualizar esses resultados; esta documentação não os executa automaticamente.
+Os 14 workflows em `.github/workflows/` têm permissão `contents: write` e podem publicar resultados com commit e push para `main`. Treze são acionados por `workflow_dispatch`; `convert-crossstrike-texr-png-v3.yml` também roda quando o próprio arquivo YAML é alterado. Antes de executar ou editar qualquer workflow, confira suas etapas e os arquivos que ele modifica: eles não são somente de leitura. Esta documentação não executa workflows automaticamente.
 
 ### PAK combinado experimental
 
