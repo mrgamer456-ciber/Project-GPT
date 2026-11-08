@@ -48,6 +48,7 @@ Ferramenta local para inspecionar arquivos de textura TIM2 do PlayStation 2. Lê
 - **Entrada:** `tools/ps2-tim2-inspector/index.html`
 - **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
 - **Referência PSM:** os identificadores de formato GS seguem o [PS2SDK](https://ps2dev.github.io/ps2sdk/gs__psm_8h.html), incluindo PSMT4HL = `0x24` e PSMT4HH = `0x2C`.
+- **Desempenho:** lê apenas 16 bytes do cabeçalho principal e 48 bytes por imagem para inspecionar metadados; não carrega os dados completos das texturas.
 - **Limites:** não decodifica pixels, não converte para PNG e não valida completamente swizzling, alinhamento GS ou paletas. A validação estrutural é preliminar.
 
 ### Utilitário — ZIP Extractor
