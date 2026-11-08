@@ -11,7 +11,7 @@
 <body><main>
 <div class="tag">PROJECT-GPT · LAB 005</div>
 <h1>🧩 PS2 TIM2 Texture Inspector</h1>
-<p>Inspecione cabeçalhos de texturas TIM2 usadas em jogos de PlayStation 2. A ferramenta identifica imagens, dimensões, formatos, tamanhos e possíveis problemas de estrutura. Não modifica nem envia seus arquivos.</p>
+<p>Inspecione cabeçalhos de texturas TIM2 usadas em jogos de PlayStation 2. A ferramenta identifica imagens, dimensões, formatos, tamanhos e possíveis problemas de estrutura. Não modifica nem envia seus arquivos. Lê somente o cabeçalho principal e os cabeçalhos de imagem em pequenos blocos, sem carregar os pixels inteiros na memória.</p>
 <section class="panel">
 <label class="drop" id="drop"><b>Toque para escolher um arquivo .TM2</b><br><span>ou solte o arquivo nesta área</span><br><br><span class="ok">Selecionar arquivo</span><input id="file" type="file" accept=".tm2,.bin,application/octet-stream"></label>
 <p id="status" aria-live="polite">Aguardando arquivo…</p>
@@ -25,52 +25,70 @@
 <footer>Project-GPT · Lab 005 · Análise local no navegador · Não é um decodificador/renderizador de pixels</footer>
 </main>
 <script>
-const $=id=>document.getElementById(id);let report='';
+const $=id=>document.getElementById(id);
+let report='',currentJob=0,readBytes=0;
 const u16=(v,o)=>v.getUint16(o,true),u32=(v,o)=>v.getUint32(o,true);
 const fmt=n=>n.toLocaleString('pt-BR')+' bytes';
+const MAX_IMAGES=4096;
 const psmNames={0:'PSMCT32 (32-bit)',1:'PSMCT24 (24-bit)',2:'PSMCT16 (16-bit)',10:'PSMCT16S (16-bit signed)',19:'PSMT8 (8-bit indexed)',20:'PSMT4 (4-bit indexed)',27:'PSMT8H (8-bit indexed high)',26:'PSMT4HL (4-bit indexed high/low)',44:'PSMT4HH (4-bit indexed high)',48:'PSMZ32 (depth 32-bit)',49:'PSMZ24 (depth 24-bit)',50:'PSMZ16 (depth 16-bit)',58:'PSMZ16S (depth 16-bit signed)'};
 const imageTypes={0:'Indefinido',1:'16-bit RGBA',2:'32-bit RGB',3:'32-bit RGBA',4:'4-bit indexado',5:'8-bit indexado'};
-function stat(k,v){let d=document.createElement('div');d.className='stat';let s=document.createElement('small');s.textContent=k;let b=document.createElement('strong');b.textContent=v;d.append(s,b);$('stats').append(d)}
-function parse(file,buffer){
- const b=new Uint8Array(buffer),v=new DataView(buffer),issues=[],pics=[];
- if(b.length<16)throw Error('Arquivo pequeno demais: o cabeçalho TIM2 precisa de pelo menos 16 bytes.');
+function stat(k,v){const d=document.createElement('div');d.className='stat';const s=document.createElement('small');s.textContent=k;const b=document.createElement('strong');b.textContent=v;d.append(s,b);$('stats').append(d)}
+async function readRange(file,offset,length){
+ if(!Number.isSafeInteger(offset)||!Number.isSafeInteger(length)||offset<0||length<0||offset>file.size||length>file.size-offset)throw Error('Intervalo de leitura fora do arquivo (offset '+offset+', tamanho '+length+').');
+ const buffer=await file.slice(offset,offset+length).arrayBuffer();
+ if(buffer.byteLength!==length)throw Error('Leitura incompleta no offset '+offset+'.');
+ readBytes+=buffer.byteLength;
+ return {bytes:new Uint8Array(buffer),view:new DataView(buffer)};
+}
+async function parse(file,job){
+ const issues=[],pics=[];
+ if(file.size<16)throw Error('Arquivo pequeno demais: o cabeçalho TIM2 precisa de pelo menos 16 bytes.');
+ const main=await readRange(file,0,16);
+ if(job!==currentJob)return;
+ const b=main.bytes,v=main.view;
  const magic=String.fromCharCode(...b.slice(0,4));
  if(magic!=='TIM2')throw Error('Assinatura TIM2 não encontrada nos primeiros 4 bytes. Encontrado: '+Array.from(b.slice(0,4),x=>x.toString(16).padStart(2,'0')).join(' '));
  const version=b[4],formatId=b[5],imageCount=u16(v,6),headerReserved=u32(v,8),headerReserved2=u32(v,12);
- if(imageCount>0&&imageCount<=4096){
+ if(imageCount>0&&imageCount<=MAX_IMAGES){
   let pos=formatId===0?16:formatId===1?128:null;
   if(pos===null){
    issues.push('Format ID 0x'+formatId.toString(16).padStart(2,'0')+' não reconhecido; os cabeçalhos das imagens não foram lidos.');
-  }else if(pos>b.length){
+  }else if(pos>file.size){
    issues.push('O alinhamento inicial indicado pelo Format ID ultrapassa o tamanho do arquivo.');
-  }else for(let i=0;i<imageCount;i++){
-   if(pos+48>b.length){issues.push('Imagem '+(i+1)+': cabeçalho de 48 bytes incompleto no offset '+pos+'.');break;}
-   const totalSize=u32(v,pos),clutSize=u32(v,pos+4),imageSize=u32(v,pos+8),headerSize=u16(v,pos+12),clutColors=u16(v,pos+14);
-   const pictureFormat=b[pos+16],mipmapCount=b[pos+17],clutType=b[pos+18],imageType=b[pos+19],width=u16(v,pos+20),height=u16(v,pos+22);
-   const gsTex0Low=u32(v,pos+24),psm=(gsTex0Low>>>20)&0x3f;
-   const imageOffset=pos+headerSize,clutOffset=imageOffset+imageSize;
-   const reasons=[];
-   if(totalSize<48)reasons.push('totalSize menor que cabeçalho mínimo');
-   if(headerSize<48)reasons.push('headerSize menor que 48');
-   if(totalSize>b.length-pos)reasons.push('totalSize ultrapassa o fim do arquivo');
-   if(headerSize>totalSize)reasons.push('headerSize maior que totalSize');
-   if(imageSize>totalSize)reasons.push('imageSize maior que totalSize');
-   if(clutSize>totalSize)reasons.push('clutSize maior que totalSize');
-   if(headerSize+imageSize+clutSize>totalSize)reasons.push('headerSize + imageSize + clutSize excede totalSize');
-   if(imageOffset>b.length||imageSize>b.length-imageOffset)reasons.push('dados da imagem incompletos');
-   if(clutOffset>b.length||clutSize>b.length-clutOffset)reasons.push('dados CLUT incompletos');
-   if(width===0||height===0)reasons.push('dimensão zero');
-   if(totalSize===0){issues.push('Imagem '+(i+1)+': totalSize é zero; não é seguro continuar lendo as próximas imagens.');break;}
-   pics.push({index:i+1,pos,totalSize,clutSize,imageSize,headerSize,clutColors,pictureFormat,psm,gsTex0Low,mipmapCount,clutType,imageType,width,height,imageOffset,clutOffset,reasons});
-   if(totalSize>b.length-pos){issues.push('A imagem '+(i+1)+' declara tamanho além do arquivo; leitura interrompida.');break;}
-   pos+=totalSize;
+  }else{
+   for(let i=0;i<imageCount;i++){
+    if(pos>file.size||file.size-pos<48){issues.push('Imagem '+(i+1)+': cabeçalho de 48 bytes incompleto no offset '+pos+'.');break;}
+    const part=await readRange(file,pos,48);
+    if(job!==currentJob)return;
+    const p=part.bytes,w=part.view;
+    const totalSize=u32(w,0),clutSize=u32(w,4),imageSize=u32(w,8),headerSize=u16(w,12),clutColors=u16(w,14);
+    const pictureFormat=p[16],mipmapCount=p[17],clutType=p[18],imageType=p[19],width=u16(w,20),height=u16(w,22);
+    const gsTex0Low=u32(w,24),psm=(gsTex0Low>>>20)&0x3f;
+    const imageOffset=pos+headerSize,clutOffset=imageOffset+imageSize;
+    const reasons=[];
+    if(totalSize<48)reasons.push('totalSize menor que o cabeçalho mínimo de 48 bytes');
+    if(headerSize<48)reasons.push('headerSize menor que 48');
+    if(totalSize>file.size-pos)reasons.push('totalSize ultrapassa o fim do arquivo');
+    if(headerSize>totalSize)reasons.push('headerSize maior que totalSize');
+    if(imageSize>totalSize)reasons.push('imageSize maior que totalSize');
+    if(clutSize>totalSize)reasons.push('clutSize maior que totalSize');
+    if(headerSize+imageSize+clutSize>totalSize)reasons.push('headerSize + imageSize + clutSize excede totalSize');
+    if(imageOffset>file.size||imageSize>file.size-imageOffset)reasons.push('dados da imagem incompletos');
+    if(clutOffset>file.size||clutSize>file.size-clutOffset)reasons.push('dados CLUT incompletos');
+    if(width===0||height===0)reasons.push('dimensão zero');
+    pics.push({index:i+1,pos,totalSize,clutSize,imageSize,headerSize,clutColors,pictureFormat,psm,gsTex0Low,mipmapCount,clutType,imageType,width,height,imageOffset,clutOffset,reasons});
+    if(totalSize<48){issues.push('Imagem '+(i+1)+': tamanho inválido; leitura interrompida para evitar interpretar bytes sobrepostos como outro cabeçalho.');break;}
+    if(totalSize>file.size-pos){issues.push('Imagem '+(i+1)+': tamanho declarado ultrapassa o arquivo; leitura interrompida.');break;}
+    pos+=totalSize;
+   }
   }
  }else issues.push('Quantidade de imagens inválida ou não suportada: '+imageCount+'.');
  if(pics.length!==imageCount)issues.push('Cabeçalho declara '+imageCount+' imagem(ns), mas '+pics.length+' cabeçalho(s) puderam ser lidos.');
+ if(job!==currentJob)return;
  const versionLabel='0x'+version.toString(16).padStart(2,'0');
  $('stats').innerHTML='';
- stat('Arquivo',file.name);stat('Tamanho',fmt(b.length));stat('Assinatura',magic);stat('Versão',versionLabel);stat('Format ID','0x'+formatId.toString(16).padStart(2,'0'));stat('Imagens declaradas',String(imageCount));stat('Imagens analisadas',String(pics.length));
- $('summary').textContent=issues.length?'Atenção: '+issues.join(' '):'Cabeçalho principal e limites dos cabeçalhos de imagem parecem coerentes. Isso não confirma que os pixels possam ser decodificados.';
+ stat('Arquivo',file.name);stat('Tamanho total',fmt(file.size));stat('Bytes lidos',fmt(readBytes));stat('Assinatura',magic);stat('Versão',versionLabel);stat('Format ID','0x'+formatId.toString(16).padStart(2,'0'));stat('Imagens declaradas',String(imageCount));stat('Imagens analisadas',String(pics.length));
+ $('summary').textContent=issues.length?'Atenção: '+issues.join(' '):'Cabeçalho principal e limites dos cabeçalhos de imagem parecem coerentes. Somente os metadados foram lidos; isso não confirma que os pixels possam ser decodificados.';
  $('pictures').innerHTML='';
  const rows=[];
  for(const p of pics){
@@ -79,20 +97,25 @@ function parse(file,buffer){
   const tr=document.createElement('tr');
   [p.index,p.width+' × '+p.height,format,fmt(p.imageSize),fmt(p.clutSize),p.pos,valid?'OK':p.reasons.join('; ')].forEach((x,j)=>{const td=document.createElement('td');td.textContent=x;if(j===6)td.className=valid?'ok':'bad';tr.append(td)});
   $('pictures').append(tr);
-  rows.push('Imagem '+p.index+':\n  Cabeçalho offset: '+p.pos+'\n  Tamanho total: '+p.totalSize+'\n  Header size: '+p.headerSize+'\n  Dimensões: '+p.width+' x '+p.height+'\n  Picture format: '+p.pictureFormat+'\n  GS TEX0 (parte baixa): 0x'+p.gsTex0Low.toString(16)+'\n  PSM: '+p.psm+' ('+format+')\n  Tipo de imagem: '+p.imageType+' ('+(imageTypes[p.imageType]||'desconhecido')+')\n  Mipmaps: '+p.mipmapCount+'\n  Image data: offset '+p.imageOffset+', '+p.imageSize+' bytes\n  CLUT: offset '+p.clutOffset+', '+p.clutSize+' bytes; '+p.clutColors+' cores; '+('valor bruto 0x'+p.clutType.toString(16).padStart(2,'0')+'; decodificação detalhada pendente')+'\n  Validação: '+(valid?'OK':p.reasons.join('; ')));
+  rows.push('Imagem '+p.index+':\n  Cabeçalho offset: '+p.pos+'\n  Tamanho total: '+p.totalSize+'\n  Header size: '+p.headerSize+'\n  Dimensões: '+p.width+' x '+p.height+'\n  Picture format: '+p.pictureFormat+'\n  GS TEX0 (parte baixa): 0x'+p.gsTex0Low.toString(16)+'\n  PSM: '+p.psm+' ('+format+')\n  Tipo de imagem: '+p.imageType+' ('+(imageTypes[p.imageType]||'desconhecido')+')\n  Mipmaps: '+p.mipmapCount+'\n  Image data: offset '+p.imageOffset+', '+p.imageSize+' bytes\n  CLUT: offset '+p.clutOffset+', '+p.clutSize+' bytes; '+p.clutColors+' cores; valor bruto 0x'+p.clutType.toString(16).padStart(2,'0')+'; decodificação detalhada pendente\n  Validação: '+(valid?'OK':p.reasons.join('; ')));
  }
- $('tableNote').textContent=pics.length?'O PSM é extraído dos bits de formato do registrador GS TEX0. A ferramenta lê metadados; não converte os pixels para PNG.':'Nenhum cabeçalho de imagem completo foi encontrado.';
- $('details').textContent='TIM2 HEADER\nVersão: '+versionLabel+'\nFormat ID: 0x'+formatId.toString(16).padStart(2,'0')+'\nAlinhamento inicial: '+(formatId===0?'16 bytes':formatId===1?'128 bytes':'não reconhecido')+'\nNúmero de imagens: '+imageCount+'\nReserved 0: 0x'+headerReserved.toString(16)+'\nReserved 1: 0x'+headerReserved2.toString(16)+'\n\n'+(rows.join('\n\n')||'Nenhum detalhe de imagem disponível.')+'\n\nAVISOS\n'+(issues.length?issues.map(x=>'• '+x).join('\n'):'Nenhuma inconsistência estrutural básica detectada.')+'\n\nLIMITAÇÃO\nEste relatório valida campos básicos e limites declarados. Não valida swizzling, alinhamento GS, paletas em detalhe nem decodifica a imagem.';
- report='PROJECT-GPT — PS2 TIM2 TEXTURE INSPECTOR\nArquivo: '+file.name+'\nTamanho: '+b.length+' bytes\nVersão: '+versionLabel+'\nFormat ID: 0x'+formatId.toString(16).padStart(2,'0')+'\nImagens declaradas: '+imageCount+'\nImagens analisadas: '+pics.length+'\n\n'+$('details').textContent;
- $('results').classList.remove('hidden');$('status').textContent='Análise concluída.';
+ $('tableNote').textContent=pics.length?'O PSM é extraído dos bits de formato do registrador GS TEX0. A ferramenta lê metadados em pequenos blocos; não carrega nem converte os pixels para PNG.':'Nenhum cabeçalho de imagem completo foi encontrado.';
+ $('details').textContent='TIM2 HEADER\nVersão: '+versionLabel+'\nFormat ID: 0x'+formatId.toString(16).padStart(2,'0')+'\nAlinhamento inicial: '+(formatId===0?'16 bytes':formatId===1?'128 bytes':'não reconhecido')+'\nNúmero de imagens: '+imageCount+'\nReserved 0: 0x'+headerReserved.toString(16)+'\nReserved 1: 0x'+headerReserved2.toString(16)+'\nBytes lidos: '+readBytes+' de '+file.size+'\n\n'+(rows.join('\n\n')||'Nenhum detalhe de imagem disponível.')+'\n\nAVISOS\n'+(issues.length?issues.map(x=>'• '+x).join('\n'):'Nenhuma inconsistência estrutural básica detectada.')+'\n\nLIMITAÇÃO\nA ferramenta lê somente o cabeçalho principal e os cabeçalhos de imagem de 48 bytes. Valida campos básicos e limites declarados; não valida swizzling, alinhamento GS, paletas em detalhe nem decodifica a imagem.';
+ report='PROJECT-GPT — PS2 TIM2 TEXTURE INSPECTOR\nArquivo: '+file.name+'\nTamanho: '+file.size+' bytes\nBytes lidos: '+readBytes+'\nVersão: '+versionLabel+'\nFormat ID: 0x'+formatId.toString(16).padStart(2,'0')+'\nImagens declaradas: '+imageCount+'\nImagens analisadas: '+pics.length+'\n\n'+$('details').textContent;
+ $('results').classList.remove('hidden');$('status').textContent='Análise concluída. Foram lidos apenas os metadados.';
 }
-function load(file){if(!file)return;$('status').textContent='Lendo '+file.name+'…';const r=new FileReader();r.onload=()=>{try{parse(file,r.result)}catch(e){$('status').textContent='Não foi possível analisar: '+e.message;$('results').classList.add('hidden')}};r.onerror=()=>$('status').textContent='Falha ao ler o arquivo.';r.readAsArrayBuffer(file)}
+async function load(file){
+ if(!file)return;
+ const job=++currentJob;
+ report='';readBytes=0;$('results').classList.add('hidden');$('status').textContent='Lendo somente os cabeçalhos de '+file.name+'…';
+ try{await parse(file,job)}catch(e){if(job===currentJob){$('status').textContent='Não foi possível analisar: '+e.message;$('results').classList.add('hidden')}}
+}
 $('drop').addEventListener('click',e=>{if(e.target.tagName!=='INPUT')$('file').click()});
 $('file').addEventListener('change',e=>load(e.target.files[0]));
 ['dragenter','dragover'].forEach(n=>$('drop').addEventListener(n,e=>{e.preventDefault();$('drop').style.borderColor='var(--accent)'}));
 ['dragleave','drop'].forEach(n=>$('drop').addEventListener(n,e=>{e.preventDefault();$('drop').style.borderColor=''}));
-$('drop').addEventListener('drop',e=>load(e.dataTransfer.files[0]));
-$('download').onclick=()=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([report],{type:'text/plain;charset=utf-8'}));a.href=u;a.download='tim2-inspection.txt';a.click();URL.revokeObjectURL(u)};
+$('drop').addEventListener('drop',e=>{const file=e.dataTransfer.files[0];if(file)load(file)});
+$('download').onclick=()=>{if(!report)return;const a=document.createElement('a'),u=URL.createObjectURL(new Blob([report],{type:'text/plain;charset=utf-8'}));a.href=u;a.download='tim2-inspection.txt';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
 $('copy').onclick=()=>{if(report)navigator.clipboard.writeText(report).then(()=>$('status').textContent='Relatório copiado.').catch(()=>$('status').textContent='Não foi possível copiar neste navegador.')};
-$('clear').onclick=()=>{$('file').value='';$('results').classList.add('hidden');$('status').textContent='Aguardando arquivo…';report=''};
+$('clear').onclick=()=>{currentJob++;$('file').value='';$('results').classList.add('hidden');$('status').textContent='Aguardando arquivo…';report='';readBytes=0};
 </script></body></html>
