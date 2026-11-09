@@ -1,0 +1,81 @@
+name: Deep inspect CrossStrike PS2 ELF
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install MIPS binutils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils-mipsel-linux-gnu file
+
+      - name: Inspect MAIN.ELF
+        shell: bash
+        run: |
+          set -euo pipefail
+          ELF="samples/cross-strike/PS2/MAIN.ELF"
+          OUT="crossstrike-elf-deep-analysis"
+          mkdir -p "$OUT"
+          test -s "$ELF"
+
+          file "$ELF" > "$OUT/file.txt"
+          mipsel-linux-gnu-readelf -h -l -S -s -r "$ELF" > "$OUT/readelf.txt" 2>&1 || true
+          mipsel-linux-gnu-nm -an "$ELF" > "$OUT/nm.txt" 2>&1 || true
+          strings -a -n 4 "$ELF" > "$OUT/strings-all.txt"
+
+          if mipsel-linux-gnu-objdump -D -m mips:5900 "$ELF" > "$OUT/disassembly.txt" 2> "$OUT/objdump-errors.txt"; then
+            echo "Disassembly architecture: MIPS 5900" > "$OUT/disassembly-status.txt"
+          elif mipsel-linux-gnu-objdump -D -m mips:3000 "$ELF" > "$OUT/disassembly.txt" 2>> "$OUT/objdump-errors.txt"; then
+            echo "Disassembly architecture: MIPS 3000 fallback; PS2-specific opcodes may be shown as unknown" > "$OUT/disassembly-status.txt"
+          else
+            echo "Disassembly failed; see objdump-errors.txt" > "$OUT/disassembly-status.txt"
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, re
+          elf = Path("samples/cross-strike/PS2/MAIN.ELF").read_bytes()
+          out = Path("crossstrike-elf-deep-analysis")
+          text = (out / "strings-all.txt").read_text(errors="replace").splitlines()
+          patterns = re.compile(r"pak|asset|texture|model|mesh|render|draw|camera|player|enemy|audio|sound|map|collision|vertex|shader|vu0|vu1|gsKit|sceGs|sceVu|scePad|sceCd|load|\.pak|\.elf|\.irx", re.I)
+          relevant = [line for line in text if patterns.search(line)]
+          report = [
+            "# CrossStrike MAIN.ELF — análise profunda",
+            "",
+            f"- Tamanho: {len(elf)} bytes",
+            f"- SHA-256: {hashlib.sha256(elf).hexdigest()}",
+            "- Arquivo original mantido intacto.",
+            "",
+            "## Tipo e cabeçalho",
+            "Consulte file.txt e readelf.txt.",
+            "",
+            "## Símbolos",
+            "Consulte nm.txt. Se estiver vazio ou indicar ausência de símbolos, o ELF provavelmente foi removido de símbolos de depuração.",
+            "",
+            "## Strings relevantes",
+            *[f"- {s[:200]}" for s in relevant[:350]],
+            "",
+            "## Desassemblagem",
+            "Consulte disassembly-status.txt e disassembly.txt. A desassemblagem é uma referência inicial; código MIPS R5900/VU pode exigir interpretação específica do Emotion Engine.",
+            "",
+          ]
+          (out / "REPORT.md").write_text("\n".join(report), encoding="utf-8")
+          print((out / "REPORT.md").read_text())
+          PY
+
+      - name: Upload ELF analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-ELF-deep-analysis
+          path: crossstrike-elf-deep-analysis/
+          if-no-files-found: error
+          retention-days: 14
