@@ -64,11 +64,28 @@ async function unpack(blob){
  const pak=zipEntries.filter(x=>/\.pak$/i.test(x.name)).length;
  say('Extração concluída! '+zipEntries.length+' arquivos encontrados; '+pak+' arquivo(s) .pak.');
 }
+function extractEntryLimited(entry,maxBytes){
+ return new Promise((resolve,reject)=>{
+  const chunks=[];let total=0,settled=false;
+  const stream=entry.internalStream('uint8array');
+  const fail=error=>{if(settled)return;settled=true;stream.pause();chunks.length=0;reject(error)};
+  stream.on('data',chunk=>{
+   if(settled)return;
+   total+=chunk.byteLength;
+   if(total>maxBytes){fail(new Error('O conteúdo realmente descompactado ultrapassa '+(maxBytes/1024/1024)+' MiB.'));return;}
+   chunks.push(chunk);
+  }).on('error',fail).on('end',()=>{
+   if(settled)return;settled=true;
+   resolve(new Blob(chunks,{type:'application/octet-stream'}));
+  });
+  stream.resume();
+ });
+}
 function render(){
  const q=$('filter').value.toLowerCase();const rows=zipEntries.filter(x=>x.name.toLowerCase().includes(q));
  $('summary').textContent=rows.length+' de '+zipEntries.length+' arquivos • '+zipEntries.filter(x=>/\.pak$/i.test(x.name)).length+' PAKs no total';
  $('list').innerHTML='';
- for(const x of rows){const d=document.createElement('div');d.className='file';const info=document.createElement('div');info.innerHTML='<strong></strong><br><small></small>';info.querySelector('strong').textContent=x.name;info.querySelector('small').textContent=(x.size||0).toLocaleString('pt-BR')+' bytes';const b=document.createElement('button');b.textContent='Baixar';b.onclick=async()=>{const blob=await x.entry.async('blob');const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=safeName(x.name);a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)};d.append(info,b);$('list').append(d)}
+ for(const x of rows){const d=document.createElement('div');d.className='file';const info=document.createElement('div');info.innerHTML='<strong></strong><br><small></small>';info.querySelector('strong').textContent=x.name;info.querySelector('small').textContent=(x.size||0).toLocaleString('pt-BR')+' bytes';const b=document.createElement('button');b.textContent='Baixar';b.onclick=async()=>{b.disabled=true;try{const blob=await extractEntryLimited(x.entry,LIMITS.entry);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=safeName(x.name);a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);say('Arquivo extraído: '+x.name)}catch(e){say('Não foi possível extrair '+x.name+': '+e.message)}finally{b.disabled=false}};d.append(info,b);$('list').append(d)}
 }
 $('fetch').onclick=async()=>{try{$('fetch').disabled=true;say('Baixando ZIP do GitHub…');const r=await fetch($('url').value);if(!r.ok)throw Error('HTTP '+r.status);await unpack(await responseBlobLimited(r))}catch(e){say('Não consegui baixar pelo link: '+e.message+'. Tente selecionar o ZIP manualmente.')}finally{$('fetch').disabled=false}};
 $('file').onchange=()=>{$('extract').disabled=!$('file').files.length};
