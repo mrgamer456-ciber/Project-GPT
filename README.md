@@ -12,8 +12,6 @@ Um visualizador binário que roda direto no navegador. Abre arquivos locais, mos
 - **Privacidade:** o arquivo é processado localmente no navegador; não é enviado para servidor.
 - **Limite visual:** mostra até os primeiros 64 KiB para manter o desempenho em celulares.
 
-
-
 ### PS2 ELF Inspector — Lab 002
 Uma ferramenta experimental para identificar cabeçalhos ELF e verificar se o arquivo parece ser ELF32 MIPS little-endian, formato comum em homebrews de PS2.
 
@@ -21,8 +19,6 @@ Uma ferramenta experimental para identificar cabeçalhos ELF e verificar se o ar
 - **Entrada:** `tools/ps2-elf-inspector/index.html`
 - **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
 - **Aviso:** identificação preliminar, não garante compatibilidade ou execução no console.
-
-
 
 ### Game File Detective — Lab 003
 Ferramenta local para investigar arquivos de jogos: detecta assinaturas comuns (ELF, WAD, ZIP, PNG, Ogg, UnityFS e outras), mostra os primeiros bytes em HEX e procura até 70 sequências ASCII nos primeiros 1 MiB.
@@ -49,6 +45,7 @@ Ferramenta local para inspecionar arquivos de textura TIM2 do PlayStation 2. Lê
 - **Privacidade:** análise local no navegador; nenhum arquivo é enviado.
 - **Referência PSM:** os identificadores de formato GS seguem o [PS2SDK](https://ps2dev.github.io/ps2sdk/gs__psm_8h.html), incluindo PSMT4HL = `0x24` e PSMT4HH = `0x2C`.
 - **Alinhamento:** reconhece o ID `0x00` (16 bytes) e `0x01` (128 bytes). A variante `0x81` aparece em uma referência técnica, mas há divergência entre implementações; permanece sem interpretação até ser validada com uma amostra real.
+- **Teste sintético:** o botão “Testar exemplo sintético” cria localmente um cabeçalho TIM2 mínimo de 1 × 1 PSMCT32. É um teste rápido da leitura de metadados, não uma amostra real nem uma validação de decodificação.
 - **Desempenho:** lê apenas 16 bytes do cabeçalho principal e 48 bytes por imagem para inspecionar metadados; não carrega os dados completos das texturas.
 - **Limites:** não decodifica pixels, não converte para PNG e não valida completamente swizzling, alinhamento GS ou paletas. A validação estrutural é preliminar.
 
@@ -59,7 +56,9 @@ Ferramenta auxiliar para listar o conteúdo de arquivos ZIP locais ou de um link
 - **Entrada:** `tools/zip-extractor/index.html`
 - **Privacidade:** o ZIP é lido no navegador; o conteúdo não é enviado para um servidor.
 - **Dependência:** carrega JSZip 3.10.2 pelo jsDelivr; precisa de internet para abrir a biblioteca.
-- **Limites de segurança/desempenho:** rejeita ZIPs acima de 128 MiB, mais de 5.000 arquivos, um item com tamanho declarado acima de 128 MiB ou soma declarada acima de 256 MiB. A extração de cada item também é interrompida se os dados realmente descompactados ultrapassarem 128 MiB. Use arquivos de origem confiável; limites de tamanho não substituem a validação do conteúdo.
+- **Limites de segurança/desempenho:** rejeita ZIPs acima de 128 MiB, mais de 5.000 arquivos, um item com tamanho declarado acima de 128 MiB ou soma declarada acima de 256 MiB. A extração de cada item é contada em blocos e interrompida se os dados realmente descompactados ultrapassarem 128 MiB.
+- **Memória:** o arquivo ZIP e o item escolhido continuam sendo mantidos em memória do navegador; o item é acumulado em um Blob de até 128 MiB antes do download. Não é uma extração direta para disco. Em celulares, prefira ZIPs menores e itens individuais pequenos.
+- **Cuidado:** os limites de tamanho não substituem a validação do conteúdo. Use arquivos de origem confiável.
 
 ## Experimento de análise — Cross Strike (PS2)
 
