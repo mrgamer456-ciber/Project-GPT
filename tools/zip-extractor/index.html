@@ -48,8 +48,13 @@ async function responseBlobLimited(response){
 async function unpack(blob){
  if(blob.size>LIMITS.archive)throw Error('ZIP maior que 128 MiB.');
  say('Lendo ZIP…');$('results').hidden=true;
- const zip=await JSZip.loadAsync(blob),files=Object.entries(zip.files).filter(([,e])=>!e.dir);
- if(files.length>LIMITS.entries)throw Error('ZIP contém mais de 5.000 arquivos.');
+ const zip=await JSZip.loadAsync(blob,{createFolders:false});
+ let entryCount=0;
+ for(const name in zip.files){
+  if(Object.prototype.hasOwnProperty.call(zip.files,name)&&++entryCount>LIMITS.entries)
+   throw Error('ZIP contém mais de 5.000 entradas, incluindo pastas.');
+ }
+ const files=Object.entries(zip.files).filter(([,e])=>!e.dir);
  let total=0;const entries=[];
  for(const [name,e] of files){
   const size=Number(e._data?.uncompressedSize??0);
