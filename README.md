@@ -56,7 +56,7 @@ Ferramenta auxiliar para listar o conteúdo de arquivos ZIP locais ou de um link
 - **Entrada:** `tools/zip-extractor/index.html`
 - **Privacidade:** o ZIP é lido no navegador; o conteúdo não é enviado para um servidor.
 - **Dependência:** carrega JSZip 3.10.2 pelo jsDelivr; precisa de internet para abrir a biblioteca.
-- **Limites de segurança/desempenho:** rejeita ZIPs acima de 128 MiB, mais de 5.000 arquivos, um item com tamanho declarado acima de 128 MiB ou soma declarada acima de 256 MiB. A extração de cada item é contada em blocos e interrompida se os dados realmente descompactados ultrapassarem 128 MiB.
+- **Limites de segurança/desempenho:** rejeita ZIPs acima de 128 MiB, mais de 5.000 entradas (incluindo pastas), um item com tamanho declarado acima de 128 MiB ou soma declarada acima de 256 MiB. A extração de cada item é contada em blocos e interrompida se os dados realmente descompactados ultrapassarem 128 MiB.
 - **Memória:** o arquivo ZIP e o item escolhido continuam sendo mantidos em memória do navegador; o item é acumulado em um Blob de até 128 MiB antes do download. Não é uma extração direta para disco. Em celulares, prefira ZIPs menores e itens individuais pequenos.
 - **Cuidado:** os limites de tamanho não substituem a validação do conteúdo. Use arquivos de origem confiável.
 
