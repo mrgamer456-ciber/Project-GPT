@@ -14,12 +14,12 @@
 <section>
 <label for="url">Link direto do ZIP (opcional)</label>
 <input id="url" type="url" value="https://raw.githubusercontent.com/mrgamer456-ciber/Project-GPT/main/samples/cross-strike/CrossStrike_PS2.zip">
-<button id="fetch">Baixar e extrair pelo link</button>
+<button id="fetch">Baixar e analisar pelo link</button>
 <hr>
 <label for="file">Ou escolha um ZIP do celular</label>
 <input id="file" type="file" accept=".zip,application/zip">
-<button id="extract" disabled>Extrair ZIP selecionado</button>
-<p id="status" class="status">Aguardando um ZIP…</p>
+<button id="extract" disabled>Analisar ZIP selecionado</button>
+<p id="status" class="status" aria-live="polite">Aguardando um ZIP…</p>
 </section>
 <section id="results" hidden>
 <h2>Arquivos encontrados</h2>
@@ -62,7 +62,7 @@ async function unpack(blob){
  zipEntries.sort((a,b)=>a.name.localeCompare(b.name));
  render();$('results').hidden=false;
  const pak=zipEntries.filter(x=>/\.pak$/i.test(x.name)).length;
- say('Extração concluída! '+zipEntries.length+' arquivos encontrados; '+pak+' arquivo(s) .pak.');
+ say('ZIP analisado! '+zipEntries.length+' arquivos listados; '+pak+' arquivo(s) .pak. Escolha Baixar para extrair um item.');
 }
 function extractEntryLimited(entry,maxBytes){
  return new Promise((resolve,reject)=>{
@@ -89,7 +89,7 @@ function render(){
 }
 $('fetch').onclick=async()=>{try{$('fetch').disabled=true;say('Baixando ZIP do GitHub…');const r=await fetch($('url').value);if(!r.ok)throw Error('HTTP '+r.status);await unpack(await responseBlobLimited(r))}catch(e){say('Não consegui baixar pelo link: '+e.message+'. Tente selecionar o ZIP manualmente.')}finally{$('fetch').disabled=false}};
 $('file').onchange=()=>{$('extract').disabled=!$('file').files.length};
-$('extract').onclick=async()=>{try{await unpack($('file').files[0])}catch(e){say('Erro ao extrair: '+e.message)}};
+$('extract').onclick=async()=>{try{await unpack($('file').files[0])}catch(e){say('Erro ao analisar ZIP: '+e.message)}};
 $('filter').oninput=render;
 $('report').onclick=()=>{const t=zipEntries.map(x=>x.name+' | '+x.size+' bytes').join('\n');navigator.clipboard.writeText(t).then(()=>say('Relatório copiado! Cole aqui na conversa.')).catch(()=>say(t))};
 </script></body></html>
