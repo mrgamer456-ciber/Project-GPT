@@ -1,0 +1,226 @@
+[
+  {
+    "area": "COMMON",
+    "section": "VERT",
+    "file": "samples/cross-strike/models/geometry/raw/COMMON_VERT_04.bin",
+    "bytes": 96,
+    "sha256": "402231d9de644ff49a4aac388952f5bce6cf4128fce994c144a5a4f723baf971",
+    "first_64_bytes_hex": "00 7d 00 00 00 7d 00 00 00 00 00 00 80 80 80 80 00 83 00 00 00 7d 00 00 00 00 00 00 80 80 80 80 00 83 00 00 00 83 00 00 00 00 00 00 80 80 80 80 00 7d 00 00 00 7d 00 00 00 00 00 00 80 80 80 80"
+  },
+  {
+    "area": "COMMON",
+    "section": "INDX",
+    "file": "samples/cross-strike/models/geometry/raw/COMMON_INDX_05.bin",
+    "bytes": 16,
+    "sha256": "27131179989aab7eb93f5a4b22ce6786eb7937a6dc2378f4341f17b50f3e0b19",
+    "first_64_bytes_hex": "02 00 01 00 00 00 02 00 00 00 01 00 00 00 00 00"
+  },
+  {
+    "area": "COMMON",
+    "section": "MATL",
+    "file": "samples/cross-strike/models/geometry/raw/COMMON_MATL_02.bin",
+    "bytes": 16,
+    "sha256": "30e31cbdd677456754c1a9d607a871273cdcdc62c128c6648e5313db9cbbdfa7",
+    "first_64_bytes_hex": "01 00 00 00 00 00 00 00 80 80 80 80 00 00 00 00"
+  },
+  {
+    "area": "COMMON",
+    "section": "CHNK",
+    "file": "samples/cross-strike/models/geometry/raw/COMMON_CHNK_03.bin",
+    "bytes": 208,
+    "sha256": "a98f939d26232c48342661af8de374a1e7f0345f0e7966af46f192e8a02f8291",
+    "first_64_bytes_hex": "02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 c2 00 00 00 00 00 00 80 c2 00 00 80 42 00 00 00 00 00 00 80 42 00 00 00 00 00 00 00 00 03 00 00 00 01 00 00 00 00 00 00 00 28 6b 6e 4e"
+  },
+  {
+    "area": "FLAT",
+    "section": "VERT",
+    "file": "samples/cross-strike/models/geometry/raw/FLAT_VERT_04.bin",
+    "bytes": 73408,
+    "sha256": "caa547df864f0a97d430288ae028f9b2e5588f8a3b740660a313407673268cdb",
+    "first_64_bytes_hex": "00 7d 00 00 00 7d 00 00 00 7d 00 7d 80 80 7f 80 00 7d 00 00 80 3e 00 00 00 7d 00 83 80 80 7f 80 00 7d 00 00 80 3e 00 00 00 7d 00 7d 80 80 7f 80 00 7d 00 00 00 00 00 00 00 7d 00 83 80 80 7f 80"
+  },
+  {
+    "area": "FLAT",
+    "section": "INDX",
+    "file": "samples/cross-strike/models/geometry/raw/FLAT_INDX_05.bin",
+    "bytes": 13728,
+    "sha256": "e312d6b34a0c05a159f3e1eb4411acba5fe21a97fa04d8f06113e1e078bdc259",
+    "first_64_bytes_hex": "3f 00 3e 00 35 00 3f 00 35 00 37 00 3d 00 3c 00 31 00 3d 00 31 00 34 00 3b 00 3a 00 2d 00 3b 00 2d 00 30 00 39 00 38 00 29 00 39 00 29 00 2c 00 36 00 33 00 25 00 36 00 25 00 27 00 32 00 2f 00"
+  },
+  {
+    "area": "FLAT",
+    "section": "MATL",
+    "file": "samples/cross-strike/models/geometry/raw/FLAT_MATL_02.bin",
+    "bytes": 32,
+    "sha256": "d3c96c771cea873ac3b9bf725109dcea80fa28693678f6dd6b57788773c6f4c9",
+    "first_64_bytes_hex": "02 00 00 00 00 00 01 00 71 77 6b 80 01 00 01 00 82 5e 33 80 00 00 00 00 00 00 00 00 00 00 00 00"
+  },
+  {
+    "area": "FLAT",
+    "section": "CHNK",
+    "file": "samples/cross-strike/models/geometry/raw/FLAT_CHNK_03.bin",
+    "bytes": 4528,
+    "sha256": "468981eba9956e7f3d73bdd935a99a75c4321a93bf3c7180362deeb3ef949038",
+    "first_64_bytes_hex": "2f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 c5 00 00 00 00 00 00 80 c5 00 00 40 c5 00 00 00 00 00 00 40 c5 00 00 00 00 00 00 00 00 40 00 00 00 20 00 00 00 00 00 01 00 28 6b 6e 4e"
+  },
+  {
+    "area": "ISLAND",
+    "section": "VERT",
+    "file": "samples/cross-strike/models/geometry/raw/ISLAND_VERT_04.bin",
+    "bytes": 1165408,
+    "sha256": "3cdeefa9c9da6ab6dc55e04586c4b8702d8874f1948d12064621eeb366a59969",
+    "first_64_bytes_hex": "26 1d 0c 25 72 88 00 00 f5 83 ed 1a 0c 0f 08 80 26 1d 0c 25 72 88 00 00 f5 83 ed 1a 1a 1f 10 80 26 1d 0c 25 72 88 00 00 f5 83 ed 1a 1e 24 13 80 26 1d 0c 25 72 88 00 00 f5 83 ed 1a 23 2b 17 80"
+  },
+  {
+    "area": "ISLAND",
+    "section": "INDX",
+    "file": "samples/cross-strike/models/geometry/raw/ISLAND_INDX_05.bin",
+    "bytes": 195776,
+    "sha256": "24c3c48578466a30ca0948f6c0cd6017501116d65f889858ba3f25a869973b65",
+    "first_64_bytes_hex": "19 00 04 00 36 00 13 00 18 00 35 00 08 00 51 00 05 00 1a 00 09 00 04 00 43 00 2c 00 50 00 06 00 41 00 51 00 4d 00 1e 00 2e 00 41 00 4c 00 2d 00 3d 00 24 00 1d 00 4a 00 3d 00 1d 00 12 00 37 00"
+  },
+  {
+    "area": "ISLAND",
+    "section": "MATL",
+    "file": "samples/cross-strike/models/geometry/raw/ISLAND_MATL_02.bin",
+    "bytes": 48,
+    "sha256": "528bf52a00139e75c7e73e4b0475150b2637b935bfeaacaa1b57af880b09c597",
+    "first_64_bytes_hex": "05 00 00 00 00 00 01 00 48 5d 31 80 01 00 01 00 5f 4d 37 80 02 00 01 00 ab 9f 7f 80 03 00 01 00 1f 45 53 80 04 00 01 00 b9 b9 b9 80 00 00 00 00"
+  },
+  {
+    "area": "ISLAND",
+    "section": "CHNK",
+    "file": "samples/cross-strike/models/geometry/raw/ISLAND_CHNK_03.bin",
+    "bytes": 16144,
+    "sha256": "3bc0b72a83565c6033409c284d5d2b367fe8beb63b8ee42e988dbc0bdec1fe31",
+    "first_64_bytes_hex": "a8 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 10 87 75 c5 96 5a 71 42 66 e7 28 c5 b7 85 70 c5 67 4c ea 42 de 1d 24 c5 00 00 00 00 00 00 00 00 52 00 00 00 1e 00 00 00 04 00 01 00 00 00 fa 44"
+  },
+  {
+    "area": "KASBAH",
+    "section": "VERT",
+    "file": "samples/cross-strike/models/geometry/raw/KASBAH_VERT_04.bin",
+    "bytes": 62448,
+    "sha256": "5bf7a2a36f29494bab6346476a49f88677b92493f40dee7a428400e46c47f490",
+    "first_64_bytes_hex": "a0 0f 00 00 00 00 00 00 00 00 60 f0 34 32 31 80 a0 0f 00 00 c0 e0 00 00 c0 e0 60 f0 34 32 31 80 a0 0f 00 00 80 c1 00 00 80 c1 60 f0 34 32 31 80 a0 0f 00 00 40 a2 00 00 40 a2 60 f0 34 32 31 80"
+  },
+  {
+    "area": "KASBAH",
+    "section": "INDX",
+    "file": "samples/cross-strike/models/geometry/raw/KASBAH_INDX_05.bin",
+    "bytes": 19104,
+    "sha256": "be1ab328069b04585cfcd8ace488b9ba358ef6e812d0f9e5034fc078b6c4111a",
+    "first_64_bytes_hex": "0c 00 03 00 04 00 0d 00 0c 00 04 00 0b 00 02 00 03 00 0c 00 0b 00 03 00 0a 00 01 00 02 00 0b 00 0a 00 02 00 09 00 00 00 01 00 0a 00 09 00 01 00 11 00 08 00 00 00 09 00 11 00 00 00 10 00 07 00"
+  },
+  {
+    "area": "KASBAH",
+    "section": "MATL",
+    "file": "samples/cross-strike/models/geometry/raw/KASBAH_MATL_02.bin",
+    "bytes": 64,
+    "sha256": "b069d7b0cfeb5b88683a2b57f04e10b5d825a43c0fc60fd692dd9bb0623aed6b",
+    "first_64_bytes_hex": "06 00 00 00 00 00 01 00 c3 9f 67 80 01 00 01 00 c8 aa 7c 80 02 00 01 00 82 5e 33 80 03 00 01 00 58 42 2d 80 04 00 01 00 8e 31 1a 80 05 00 00 00 c3 82 73 80 00 00 00 00 00 00 00 00 00 00 00 00"
+  },
+  {
+    "area": "KASBAH",
+    "section": "CHNK",
+    "file": "samples/cross-strike/models/geometry/raw/KASBAH_CHNK_03.bin",
+    "bytes": 4336,
+    "sha256": "6f31e69045b03ae82335a1ee5ee4b1332d5517b4f7a9aaa7dc750f076ee99863",
+    "first_64_bytes_hex": "2d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 d0 c4 00 00 00 00 00 00 20 c5 00 00 c0 c4 00 00 00 00 00 00 c0 c4 00 00 00 00 00 00 00 00 12 00 00 00 10 00 00 00 00 00 01 00 28 6b 6e 4e"
+  },
+  {
+    "area": "OFFSHORE",
+    "section": "VERT",
+    "file": "samples/cross-strike/models/geometry/raw/OFFSHORE_VERT_04.bin",
+    "bytes": 81792,
+    "sha256": "7a763ff2e56809b86b96476cdf9824ed495bb64c33196c2da81fa31874dc9cc8",
+    "first_64_bytes_hex": "00 7d 00 00 00 7d 00 00 00 7d 00 7d 7e 7b 74 80 00 83 00 00 00 7d 00 00 00 83 00 7d 7e 7b 74 80 00 83 00 00 00 83 00 00 00 83 00 83 7e 7b 74 80 00 7d 00 00 00 7d 00 00 00 7d 00 7d 7e 7b 74 80"
+  },
+  {
+    "area": "OFFSHORE",
+    "section": "INDX",
+    "file": "samples/cross-strike/models/geometry/raw/OFFSHORE_INDX_05.bin",
+    "bytes": 15776,
+    "sha256": "09b7f77cb2fa83ad4033a3476a26569ed7baad1c1c2999aad3a3e611b6cf7069",
+    "first_64_bytes_hex": "02 00 01 00 00 00 02 00 01 00 00 00 01 00 02 00 00 00 01 00 02 00 00 00 02 00 00 00 01 00 02 00 00 00 01 00 02 00 01 00 00 00 02 00 01 00 00 00 02 00 01 00 00 00 00 00 02 00 7d 00 00 00 7d 00"
+  },
+  {
+    "area": "OFFSHORE",
+    "section": "MATL",
+    "file": "samples/cross-strike/models/geometry/raw/OFFSHORE_MATL_02.bin",
+    "bytes": 80,
+    "sha256": "19e46607e2a5dc17816ab7aab4a77f40b4d41c660b70f035d50dd3072619fec5",
+    "first_64_bytes_hex": "09 00 00 00 00 00 01 00 5f 63 67 80 01 00 01 00 70 7c 83 80 02 00 01 00 98 31 1f 80 03 00 01 00 82 5e 33 80 04 00 01 00 22 45 79 80 05 00 01 00 8f 31 1a 80 06 00 01 00 18 2f 31 80 07 00 01 00"
+  },
+  {
+    "area": "OFFSHORE",
+    "section": "CHNK",
+    "file": "samples/cross-strike/models/geometry/raw/OFFSHORE_CHNK_03.bin",
+    "bytes": 7408,
+    "sha256": "afcd1c2f23d12b7e43aed2baf70f542b44e10773f7f6af18bd18fe6579c2a5ee",
+    "first_64_bytes_hex": "4d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 bb c5 00 00 16 c4 00 80 bb c5 00 80 3b c5 00 00 16 c4 00 80 3b c5 00 00 00 00 00 00 00 00 03 00 00 00 01 00 00 00 06 00 01 00 28 6b 6e 4e"
+  },
+  {
+    "area": "SNOWFIELD",
+    "section": "VERT",
+    "file": "samples/cross-strike/models/geometry/raw/SNOWFIELD_VERT_04.bin",
+    "bytes": 230368,
+    "sha256": "e8cae9111e379371b47c76be245ca4f0191345e8436f6cd44a89fa474b95b036",
+    "first_64_bytes_hex": "30 23 3c d7 0c 28 00 00 ad 48 9b 58 34 32 31 80 30 23 3c d7 00 00 00 00 ad 48 69 46 7e 7b 74 80 30 23 3c d7 f4 d7 00 00 ad 48 36 34 7e 7b 74 80 30 23 3c d7 e8 af 00 00 ad 48 04 22 7e 7b 74 80"
+  },
+  {
+    "area": "SNOWFIELD",
+    "section": "INDX",
+    "file": "samples/cross-strike/models/geometry/raw/SNOWFIELD_INDX_05.bin",
+    "bytes": 41424,
+    "sha256": "f67b029a17c9dbc8c896eb5edf7108d0c795fbb4e912c274443f8e663e08f209",
+    "first_64_bytes_hex": "20 00 1f 00 18 00 20 00 18 00 19 00 1f 00 1e 00 17 00 1f 00 17 00 18 00 1e 00 1d 00 16 00 1e 00 16 00 17 00 1d 00 1c 00 15 00 1d 00 15 00 16 00 1c 00 22 00 1b 00 1c 00 1b 00 15 00 22 00 21 00"
+  },
+  {
+    "area": "SNOWFIELD",
+    "section": "MATL",
+    "file": "samples/cross-strike/models/geometry/raw/SNOWFIELD_MATL_02.bin",
+    "bytes": 80,
+    "sha256": "2cfb504e3b5c1ee03481275e3c0358b64c4b12289a0ef509cb677ad8484e61de",
+    "first_64_bytes_hex": "08 00 00 00 00 00 01 00 d8 df e9 80 01 00 01 00 6c 6e 74 80 02 00 01 00 4f 37 27 80 03 00 00 00 38 56 47 80 04 00 01 00 71 4f 32 80 05 00 01 00 82 5e 33 80 06 00 01 00 47 53 67 80 07 00 01 00"
+  },
+  {
+    "area": "SNOWFIELD",
+    "section": "CHNK",
+    "file": "samples/cross-strike/models/geometry/raw/SNOWFIELD_CHNK_03.bin",
+    "bytes": 7696,
+    "sha256": "338ded524767f2a982df5247782c3621c9ed359eb5a456209b2ed94818f88dc9",
+    "first_64_bytes_hex": "50 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 40 c5 00 00 00 00 00 00 40 c5 9b 3b b8 c4 93 4d 02 44 00 00 c0 c4 00 00 00 00 00 00 00 00 ba 00 00 00 78 00 00 00 00 00 01 00 28 6b 6e 4e"
+  },
+  {
+    "area": "TRAINING",
+    "section": "VERT",
+    "file": "samples/cross-strike/models/geometry/raw/TRAINING_VERT_04.bin",
+    "bytes": 41680,
+    "sha256": "74d31b8e8fa50fc86c442e2520dc8e34d1eeb2a20775682486c0a86e607d7fed",
+    "first_64_bytes_hex": "38 b2 c0 e0 f4 6b 00 00 37 b5 55 d6 3a 36 31 80 38 b2 c0 e0 8c d2 00 00 af 0a d6 ed 28 26 22 80 38 b2 c0 e0 74 b0 00 00 dd fd d6 ed 28 26 22 80 38 b2 c0 e0 d1 38 00 00 25 31 d6 ed 28 26 22 80"
+  },
+  {
+    "area": "TRAINING",
+    "section": "INDX",
+    "file": "samples/cross-strike/models/geometry/raw/TRAINING_INDX_05.bin",
+    "bytes": 14400,
+    "sha256": "ec6b66ed8146e21125b1eb50f07ee3c051ec69fc4f193ce497f16e78ef3be4dc",
+    "first_64_bytes_hex": "06 00 0c 00 7e 00 06 00 7e 00 7c 00 0c 00 0a 00 7d 00 0c 00 7d 00 7e 00 0a 00 04 00 7b 00 0a 00 7b 00 7d 00 04 00 00 00 7a 00 04 00 7a 00 7b 00 7c 00 7e 00 5a 00 7c 00 5a 00 58 00 7e 00 7d 00"
+  },
+  {
+    "area": "TRAINING",
+    "section": "MATL",
+    "file": "samples/cross-strike/models/geometry/raw/TRAINING_MATL_02.bin",
+    "bytes": 64,
+    "sha256": "2591da830b274bd4ef0603f43bce75054c19e478f375b3779b2519850de533ce",
+    "first_64_bytes_hex": "06 00 00 00 00 00 01 00 3e 69 2b 80 01 00 01 00 81 7f 79 80 02 00 01 00 82 5e 33 80 03 00 01 00 62 48 2e 80 04 00 01 00 98 87 63 80 05 00 01 00 32 35 3b 80 00 00 00 00 00 00 00 00 00 00 00 00"
+  },
+  {
+    "area": "TRAINING",
+    "section": "CHNK",
+    "file": "samples/cross-strike/models/geometry/raw/TRAINING_CHNK_03.bin",
+    "bytes": 2704,
+    "sha256": "16204328d1a9d97184156cbaccf75e0ed7a4530381a25a6a7783eda77ed574c0",
+    "first_64_bytes_hex": "1c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 16 c4 00 00 00 00 00 00 4d c4 8d b0 dc 41 00 00 5c 43 00 00 70 42 00 00 00 00 00 00 00 00 a7 00 00 00 a5 00 00 00 01 00 01 00 28 6b 6e 4e"
+  }
+]
