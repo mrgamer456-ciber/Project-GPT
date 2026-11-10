@@ -1,0 +1,18 @@
+[
+  {
+    "area": "COMMON",
+    "source": "samples/cross-strike/analysis/extracted/COMMON/MODL_13.bin",
+    "file": "samples/cross-strike/models/raw/COMMON_MODL_13.bin",
+    "bytes": 2848160,
+    "sha256": "53f49b6f11cc99da83cd371b41a0b53fd37f46c6c75283dc88c4b03d18a06fe7",
+    "first_64_bytes_hex": "22 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 09 00 00 00 d8 00 00 96 04 00 00 90 f3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 20 41"
+  },
+  {
+    "area": "OFFSHORE",
+    "source": "samples/cross-strike/analysis/extracted/OFFSHORE/MODL_15.bin",
+    "file": "samples/cross-strike/models/raw/OFFSHORE_MODL_15.bin",
+    "bytes": 2848160,
+    "sha256": "53f49b6f11cc99da83cd371b41a0b53fd37f46c6c75283dc88c4b03d18a06fe7",
+    "first_64_bytes_hex": "22 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 09 00 00 00 d8 00 00 96 04 00 00 90 f3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 20 41"
+  }
+]
