@@ -1,0 +1,92 @@
+name: Extract CrossStrike raw 3D model sections
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/extract-crossstrike-model-sections.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  extract-model-sections:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect MODL sections and create inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import hashlib
+          import json
+
+          source = Path("samples/cross-strike/analysis/extracted")
+          output = Path("samples/cross-strike/models/raw")
+          output.mkdir(parents=True, exist_ok=True)
+          entries = []
+
+          for file in sorted(source.glob("*/MODL_*.bin")):
+              area = file.parent.name
+              target = output / f"{area}_{file.name}"
+              data = file.read_bytes()
+              target.write_bytes(data)
+              entries.append({
+                  "area": area,
+                  "source": str(file),
+                  "file": str(target),
+                  "bytes": len(data),
+                  "sha256": hashlib.sha256(data).hexdigest(),
+                  "first_64_bytes_hex": data[:64].hex(" ")
+              })
+
+          if not entries:
+              raise SystemExit("No MODL sections found in extracted PAK data.")
+
+          (output / "inventory.json").write_text(
+              json.dumps(entries, indent=2) + "\n", encoding="utf-8"
+          )
+
+          lines = [
+              "# CrossStrike — raw 3D model section extraction",
+              "",
+              "These are original MODL binary sections copied without modification.",
+              "They are not yet converted to OBJ/FBX; the internal mesh record format still needs decoding.",
+              "",
+              "| Map/area | File | Bytes | SHA-256 |",
+              "|---|---|---:|---|"
+          ]
+          for item in entries:
+              lines.append(
+                  "| " + item["area"] + " | " + Path(item["file"]).name + " | "
+                  + format(item["bytes"], ",") + " | " + item["sha256"] + " |"
+              )
+          (output / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print("\n".join(lines))
+          print("\nExtracted " + str(len(entries)) + " raw MODL sections.")
+          PY
+
+      - name: Commit extracted model sections
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/models/raw
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Extract raw CrossStrike 3D model sections"
+            git push
+          fi
+
+      - name: Upload raw model sections
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-raw-3D-model-sections
+          path: samples/cross-strike/models/raw/
+          if-no-files-found: error
+          retention-days: 14
