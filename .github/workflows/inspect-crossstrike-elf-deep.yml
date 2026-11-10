@@ -2,6 +2,10 @@ name: Deep inspect CrossStrike PS2 ELF
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/inspect-crossstrike-elf-deep.yml'
+      - 'samples/cross-strike/PS2/MAIN.ELF'
 
 permissions:
   contents: read
