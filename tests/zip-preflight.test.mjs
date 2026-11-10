@@ -5,19 +5,14 @@ import vm from 'node:vm';
 // Testa a função real embutida no HTML, sem depender de JSZip ou de rede.
 const htmlUrl = new URL('../tools/zip-extractor/index.html', import.meta.url);
 const html = readFileSync(htmlUrl, 'utf8');
-const match = html.match(/async function preflightZip\\(blob\\)\\s*\\{[\\s\\S]*?\\n\\}\\nasync function unpack/);
+const match = html.match(/async function preflightZip\(blob\)\s*\{[\s\S]*?\n\}\nasync function unpack/);
 assert.ok(match, 'preflightZip deve existir no ZIP Extractor');
-const functionSource = match[0].replace(/\\nasync function unpack$/, '');
+const functionSource = match[0].replace(/\nasync function unpack$/, '');
 const context = {
-  LIMITS: {
-    archive: 128 * 1024 * 1024,
-    entries: 5000,
-    entry: 128 * 1024 * 1024,
-    total: 256 * 1024 * 1024
-  },
+  LIMITS: { archive: 128 * 1024 * 1024, entries: 5000, entry: 128 * 1024 * 1024, total: 256 * 1024 * 1024 },
   Blob, DataView, Uint8Array, Error, Number, Object, Math
 };
-vm.runInNewContext(`${functionSource}\\nglobalThis.preflightZip = preflightZip;`, context);
+vm.runInNewContext(functionSource + "\nglobalThis.preflightZip = preflightZip;", context);
 const preflightZip = context.preflightZip;
 
 function makeZip({ prefix = Buffer.alloc(0), name = 'sample.bin', data = Buffer.from('PS2'), dataDescriptor = false } = {}) {
@@ -65,11 +60,7 @@ function makeZip({ prefix = Buffer.alloc(0), name = 'sample.bin', data = Buffer.
   eocd.writeUInt16LE(1, 10);
   eocd.writeUInt32LE(centralRecord.length, 12);
   eocd.writeUInt32LE(cdOffset, 16);
-
-  return {
-    bytes: Buffer.concat([prefix, localRecord, centralRecord, eocd]),
-    centralOffset: prefix.length + cdOffset
-  };
+  return { bytes: Buffer.concat([prefix, localRecord, centralRecord, eocd]), centralOffset: prefix.length + cdOffset };
 }
 
 async function accepts(label, bytes, expectedEntries = 1) {
@@ -84,25 +75,18 @@ async function rejects(label, bytes) {
 const ordinary = makeZip();
 const ordinaryResult = await accepts('ZIP comum', ordinary.bytes);
 assert.equal(ordinaryResult.totalUncompressed, 3);
-
-const selfExtracting = makeZip({ prefix: Buffer.from('MZ-STUB') });
-await accepts('ZIP com prefixo autoextraível', selfExtracting.bytes);
-
-const descriptor = makeZip({ dataDescriptor: true });
-await accepts('ZIP com data descriptor', descriptor.bytes);
+await accepts('ZIP com prefixo autoextraível', makeZip({ prefix: Buffer.from('MZ-STUB') }).bytes);
+await accepts('ZIP com data descriptor', makeZip({ dataDescriptor: true }).bytes);
 
 const badOffset = makeZip();
 badOffset.bytes.writeUInt32LE(0x7fffffff, badOffset.centralOffset + 42);
 await rejects('offset de cabeçalho local fora do arquivo', badOffset.bytes);
-
 const badCompressedSize = makeZip();
 badCompressedSize.bytes.writeUInt32LE(0x7fffffff, badCompressedSize.centralOffset + 20);
 await rejects('dados compactados além da área de dados', badCompressedSize.bytes);
-
 const badSignature = makeZip();
 badSignature.bytes.writeUInt32LE(0x11111111, 0);
 await rejects('assinatura de cabeçalho local inválida', badSignature.bytes);
-
 const badHeaderLength = makeZip();
 badHeaderLength.bytes.writeUInt16LE(0xffff, 26);
 await rejects('nome do cabeçalho local além dos limites', badHeaderLength.bytes);
@@ -110,5 +94,4 @@ await rejects('nome do cabeçalho local além dos limites', badHeaderLength.byte
 const empty = Buffer.alloc(22);
 empty.writeUInt32LE(0x06054b50, 0);
 await accepts('ZIP vazio', empty, 0);
-
 console.log('ZIP preflight: 8 casos passaram (ZIP comum, prefixo SFX, data descriptor, ZIP vazio e quatro entradas malformadas).');
