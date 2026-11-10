@@ -74,25 +74,56 @@ async function preflightZip(blob){
   if(pos+46>cdEnd)throw Error('Diretório central ZIP truncado.');
   const header=new DataView(await blob.slice(pos,pos+46).arrayBuffer());
   if(header.getUint32(0,true)!==0x02014b50)throw Error('Entrada inválida no diretório central ZIP.');
+  const flags=header.getUint16(8,true),method=header.getUint16(10,true);
+  const crc32=header.getUint32(16,true);
   const compressedSize=header.getUint32(20,true),uncompressedSize=header.getUint32(24,true);
   const nameLength=header.getUint16(28,true),extraLength=header.getUint16(30,true),commentLength=header.getUint16(32,true);
   const diskStart=header.getUint16(34,true),localOffset=header.getUint32(42,true);
+  const next=pos+46+nameLength+extraLength+commentLength;
+  if(next>cdEnd)throw Error('Metadados de uma entrada ZIP ultrapassam o diretório central.');
   if(compressedSize===0xffffffff||uncompressedSize===0xffffffff||localOffset===0xffffffff||diskStart===0xffff)
    throw Error('Entrada ZIP64 não é suportada nesta versão do extrator.');
   if(diskStart!==0)throw Error('Entrada multidisco não é suportada.');
+  if((flags&0x0001)!==0)throw Error('ZIP protegido por senha não é suportado.');
+  if(method!==0&&method!==8)throw Error('Método de compactação ZIP não suportado: '+method+'.');
   if(uncompressedSize>LIMITS.entry)throw Error('Uma entrada declara mais de 128 MiB descompactados.');
+  if(totalUncompressed>LIMITS.total-uncompressedSize)throw Error('O conteúdo declarado ultrapassa 256 MiB descompactados.');
+  totalUncompressed+=uncompressedSize;
   if(localOffset>=cdOffset)throw Error('Cabeçalho local de uma entrada aponta para dentro do diretório central ZIP.');
   const localStart=archiveBase+localOffset;
   if(localStart<archiveBase||localStart>cdStart-30)throw Error('Cabeçalho local de uma entrada está fora da área de dados ZIP.');
   const localHeader=new DataView(await blob.slice(localStart,localStart+30).arrayBuffer());
   if(localHeader.byteLength!==30||localHeader.getUint32(0,true)!==0x04034b50)throw Error('Assinatura de cabeçalho local inválida no offset '+localStart+'.');
+  const localFlags=localHeader.getUint16(6,true),localMethod=localHeader.getUint16(8,true);
+  const localCrc32=localHeader.getUint32(14,true);
+  const localCompressedSize=localHeader.getUint32(18,true),localUncompressedSize=localHeader.getUint32(22,true);
   const localNameLength=localHeader.getUint16(26,true),localExtraLength=localHeader.getUint16(28,true);
+  if(localFlags!==flags)throw Error('Flags do cabeçalho local não correspondem ao diretório central ZIP.');
+  if(localMethod!==method)throw Error('Método de compactação do cabeçalho local não corresponde ao diretório central ZIP.');
+  if(localNameLength!==nameLength)throw Error('Nome do cabeçalho local não corresponde ao diretório central ZIP.');
   const dataStart=localStart+30+localNameLength+localExtraLength;
-  if(dataStart>cdStart||compressedSize>cdStart-dataStart)throw Error('Dados compactados de uma entrada ultrapassam a área anterior ao diretório central ZIP.');
-  totalUncompressed+=uncompressedSize;
-  if(totalUncompressed>LIMITS.total)throw Error('O conteúdo declarado ultrapassa 256 MiB descompactados.');
-  const next=pos+46+nameLength+extraLength+commentLength;
-  if(next>cdEnd)throw Error('Metadados de uma entrada ZIP ultrapassam o diretório central.');
+  if(dataStart>cdStart)throw Error('Cabeçalho local e campos extras ultrapassam a área de dados ZIP.');
+  const centralName=new Uint8Array(await blob.slice(pos+46,pos+46+nameLength).arrayBuffer());
+  const localName=new Uint8Array(await blob.slice(localStart+30,localStart+30+localNameLength).arrayBuffer());
+  if(centralName.length!==localName.length||centralName.some((byte,index)=>byte!==localName[index]))
+   throw Error('Nome local da entrada difere do nome no diretório central ZIP.');
+  if((flags&0x0008)!==0){
+   const matchesOrZero=(value,expected)=>value===0||value===expected;
+   if(!matchesOrZero(localCrc32,crc32)||!matchesOrZero(localCompressedSize,compressedSize)||!matchesOrZero(localUncompressedSize,uncompressedSize))
+    throw Error('Tamanhos ou CRC do cabeçalho local são inconsistentes com o diretório central ZIP.');
+  }else if(localCrc32!==crc32||localCompressedSize!==compressedSize||localUncompressedSize!==uncompressedSize){
+   throw Error('CRC ou tamanhos do cabeçalho local não correspondem ao diretório central ZIP.');
+  }
+  const dataEnd=dataStart+compressedSize;
+  if(compressedSize>cdStart-dataStart)throw Error('Dados compactados de uma entrada ultrapassam a área anterior ao diretório central ZIP.');
+  if((flags&0x0008)!==0){
+   const available=cdStart-dataEnd;
+   if(available<12)throw Error('Descritor de dados ZIP ausente ou truncado.');
+   const descriptor=new DataView(await blob.slice(dataEnd,dataEnd+Math.min(16,available)).arrayBuffer());
+   const unsignedMatches=descriptor.byteLength>=12&&descriptor.getUint32(0,true)===crc32&&descriptor.getUint32(4,true)===compressedSize&&descriptor.getUint32(8,true)===uncompressedSize;
+   const signedMatches=descriptor.byteLength>=16&&descriptor.getUint32(0,true)===0x08074b50&&descriptor.getUint32(4,true)===crc32&&descriptor.getUint32(8,true)===compressedSize&&descriptor.getUint32(12,true)===uncompressedSize;
+   if(!unsignedMatches&&!signedMatches)throw Error('Descritor de dados ZIP não corresponde ao diretório central.');
+  }
   pos=next;
  }
  if(pos!==cdEnd)throw Error('Quantidade de entradas ou tamanho do diretório central ZIP inconsistente.');
