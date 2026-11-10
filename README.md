@@ -72,7 +72,7 @@ A pasta `samples/cross-strike/` reúne uma amostra ZIP, arquivos PS2 extraídos 
 
 ### Workflows do Cross Strike
 
-Os 14 workflows em `.github/workflows/` têm permissão `contents: write` e podem publicar resultados com commit e push para `main`. Treze são acionados por `workflow_dispatch`; `convert-crossstrike-texr-png-v3.yml` também roda quando o próprio arquivo YAML é alterado. Antes de executar ou editar qualquer workflow, confira suas etapas e os arquivos que ele modifica: eles não são somente de leitura. Esta documentação não executa workflows automaticamente.
+Há 15 workflows em `.github/workflows/`. Quatorze workflows de processamento do CrossStrike têm permissão `contents: write` e podem publicar resultados com commit e push para `main`: treze usam `workflow_dispatch`, e `convert-crossstrike-texr-png-v3.yml` também roda quando o próprio arquivo YAML é alterado. O novo `inspect-crossstrike-elf-deep.yml` é manual, usa somente `contents: read` e envia a análise como artifact por 14 dias; não faz commit nem push. Antes de executar ou editar qualquer workflow, confira suas etapas e os arquivos que ele modifica. Esta documentação não executa workflows automaticamente.
 
 ### PAK combinado experimental
 
