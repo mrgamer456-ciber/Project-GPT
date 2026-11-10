@@ -1,0 +1,72 @@
+name: Decode CrossStrike vertex layout
+on:
+  push:
+    paths:
+      - ".github/workflows/decode-crossstrike-vertices.yml"
+  workflow_dispatch:
+jobs:
+  decode:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyze packed vertex records and chunk layout
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct, json, math
+          root=Path("samples/cross-strike/analysis/extracted")
+          out=Path("samples/cross-strike/models/geometry/decode")
+          out.mkdir(parents=True, exist_ok=True)
+          lines=["# CrossStrike vertex-layout investigation","",
+          "This report tests interpretations; it does not assume a format without evidence.",""]
+          for area in sorted(root.iterdir()):
+            if not area.is_dir(): continue
+            vf=next(iter(sorted(area.glob("VERT_*.bin"))),None)
+            ix=next(iter(sorted(area.glob("INDX_*.bin"))),None)
+            cf=next(iter(sorted(area.glob("CHNK_*.bin"))),None)
+            if not vf or not ix: continue
+            v=vf.read_bytes(); idx=ix.read_bytes()
+            lines += [f"## {area.name}",f"- VERT: {len(v)} bytes; records@16: {len(v)//16}; remainder: {len(v)%16}",f"- INDX: {len(idx)} bytes; u16 indices: {len(idx)//2}; max index: {max(struct.unpack('<'+'H'*(len(idx)//2),idx)) if len(idx)>=2 else 'n/a'}"]
+            lines += ["","### First 12 records: raw + numeric interpretations","| # | hex | u16 | i16 | f32 triplet (offset 0) |","|---:|---|---|---|---|"]
+            for n in range(min(12,len(v)//16)):
+              b=v[n*16:(n+1)*16]
+              u=struct.unpack('<8H',b); si=struct.unpack('<8h',b)
+              fl=struct.unpack('<4f',b)
+              fmt=lambda a: ', '.join(f'{x:.5g}' for x in a)
+              lines.append(f"| {n} | {b.hex(' ')} | {fmt(u)} | {fmt(si)} | {fmt(fl[:3])} |")
+            lines += ["","### Per-lane statistics (16-byte records)","| Lane | u16 min..max | i16 min..max | f32 finite min..max |","|---:|---:|---:|---:|"]
+            recs=[v[i:i+16] for i in range(0,len(v)-15,16)]
+            for lane in range(8):
+              us=[struct.unpack_from('<H',r,lane*2)[0] for r in recs]
+              ss=[struct.unpack_from('<h',r,lane*2)[0] for r in recs]
+              fs=[struct.unpack_from('<f',r,lane*2)[0] for r in recs]
+              fs=[x for x in fs if math.isfinite(x) and abs(x)<1e10]
+              fr=(f'{min(fs):.5g}..{max(fs):.5g}' if fs else 'none')
+              lines.append(f"| {lane} | {min(us)}..{max(us)} | {min(ss)}..{max(ss)} | {fr} |")
+            if cf:
+              c=cf.read_bytes()
+              lines += ["",f"### CHNK: {len(c)} bytes","",f"- First 256 bytes: `{c[:256].hex(' ')}`",""]
+              lines += ["- Candidate record sizes dividing the file: "+", ".join(str(k) for k in range(4,257,4) if len(c)%k==0)]
+            # index sample and triangle plausibility
+            if len(idx)>=24:
+              ids=struct.unpack('<'+'H'*(len(idx)//2),idx)
+              lines += ["","### Index sequence sample","", "`"+", ".join(map(str,ids[:48]))+"`",""]
+          (out/"vertex-layout-report.md").write_text("\n".join(lines)+"\n")
+          print("\n".join(lines[:120]))
+          PY
+      - name: Commit report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/models/geometry/decode/vertex-layout-report.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Analyze CrossStrike packed vertex layout"
+            git push
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-vertex-layout-report
+          path: samples/cross-strike/models/geometry/decode/vertex-layout-report.md
