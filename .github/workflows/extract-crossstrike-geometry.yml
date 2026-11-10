@@ -1,0 +1,64 @@
+name: Extract CrossStrike mesh geometry sections
+
+on:
+  push:
+    paths:
+      - ".github/workflows/extract-crossstrike-geometry.yml"
+  workflow_dispatch:
+
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect VERT INDX MATL CHNK sections
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json, struct
+          src = Path("samples/cross-strike/analysis/extracted")
+          dst = Path("samples/cross-strike/models/geometry/raw")
+          dst.mkdir(parents=True, exist_ok=True)
+          inventory = []
+          for area in sorted(src.iterdir()):
+              if not area.is_dir():
+                  continue
+              for kind in ("VERT", "INDX", "MATL", "CHNK"):
+                  for f in sorted(area.glob(kind + "_*.bin")):
+                      data = f.read_bytes()
+                      out = dst / f"{area.name}_{f.name}"
+                      out.write_bytes(data)
+                      inventory.append({
+                          "area": area.name, "section": kind,
+                          "file": str(out), "bytes": len(data),
+                          "sha256": hashlib.sha256(data).hexdigest(),
+                          "first_64_bytes_hex": data[:64].hex(" ")
+                      })
+          (dst / "inventory.json").write_text(json.dumps(inventory, indent=2), encoding="utf-8")
+          lines = ["# CrossStrike geometry sections", "", "Raw sections copied unchanged from extracted PAKs.", "",
+                   "| Area | Section | Bytes | File |", "|---|---:|---:|---|"]
+          for x in inventory:
+              lines.append(f"| {x['area']} | {x['section']} | {x['bytes']} | {Path(x['file']).name} |")
+          (dst / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print(f"Collected {len(inventory)} geometry-related sections")
+          for x in inventory:
+              print(x["area"], x["section"], x["bytes"], x["file"])
+          PY
+      - name: Commit extracted sections
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add samples/cross-strike/models/geometry/raw
+          if ! git diff --cached --quiet; then
+            git commit -m "Extract CrossStrike mesh geometry sections"
+            git push
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-mesh-geometry-raw
+          path: samples/cross-strike/models/geometry/raw/
+          if-no-files-found: error
