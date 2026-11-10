@@ -68,6 +68,7 @@ async function preflightZip(blob){
  }
  const cdStart=eocdOffset-cdSize,cdEnd=eocdOffset;
  if(cdStart<0||cdOffset>cdStart)throw Error('Diretório central ZIP aponta para uma região inválida.');
+ const archiveBase=cdStart-cdOffset;
  let pos=cdStart,totalUncompressed=0;
  for(let i=0;i<entryCount;i++){
   if(pos+46>cdEnd)throw Error('Diretório central ZIP truncado.');
@@ -80,6 +81,14 @@ async function preflightZip(blob){
    throw Error('Entrada ZIP64 não é suportada nesta versão do extrator.');
   if(diskStart!==0)throw Error('Entrada multidisco não é suportada.');
   if(uncompressedSize>LIMITS.entry)throw Error('Uma entrada declara mais de 128 MiB descompactados.');
+  if(localOffset>=cdOffset)throw Error('Cabeçalho local de uma entrada aponta para dentro do diretório central ZIP.');
+  const localStart=archiveBase+localOffset;
+  if(localStart<archiveBase||localStart>cdStart-30)throw Error('Cabeçalho local de uma entrada está fora da área de dados ZIP.');
+  const localHeader=new DataView(await blob.slice(localStart,localStart+30).arrayBuffer());
+  if(localHeader.byteLength!==30||localHeader.getUint32(0,true)!==0x04034b50)throw Error('Assinatura de cabeçalho local inválida no offset '+localStart+'.');
+  const localNameLength=localHeader.getUint16(26,true),localExtraLength=localHeader.getUint16(28,true);
+  const dataStart=localStart+30+localNameLength+localExtraLength;
+  if(dataStart>cdStart||compressedSize>cdStart-dataStart)throw Error('Dados compactados de uma entrada ultrapassam a área anterior ao diretório central ZIP.');
   totalUncompressed+=uncompressedSize;
   if(totalUncompressed>LIMITS.total)throw Error('O conteúdo declarado ultrapassa 256 MiB descompactados.');
   const next=pos+46+nameLength+extraLength+commentLength;
