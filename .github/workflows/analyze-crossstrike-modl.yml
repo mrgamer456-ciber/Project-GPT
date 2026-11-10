@@ -1,0 +1,61 @@
+name: Analyze CrossStrike MODL binary layout
+
+on:
+  push:
+    paths:
+      - ".github/workflows/analyze-crossstrike-modl.yml"
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect raw MODL sections
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct, hashlib, math
+          root = Path("samples/cross-strike/models/raw")
+          files = sorted(root.glob("*_MODL_*.bin"))
+          out = ["CrossStrike MODL binary layout probe", "==================================", ""]
+          for path in files:
+              b = path.read_bytes()
+              out += [f"FILE: {path.name}", f"SIZE: {len(b)}", f"SHA256: {hashlib.sha256(b).hexdigest()}", ""]
+              out.append("First 256 bytes (hex):")
+              for i in range(0, min(256, len(b)), 16):
+                  chunk = b[i:i+16]
+                  out.append(f"{i:08x}: " + " ".join(f"{x:02x}" for x in chunk))
+              out.append("")
+              out.append("Little-endian uint32 values, offsets 0..256:")
+              for i in range(0, min(256, len(b)-3), 4):
+                  v = struct.unpack_from("<I", b, i)[0]
+                  if v:
+                      out.append(f"  0x{i:04x}: {v} (0x{v:08x})")
+              out.append("")
+              out.append("Plausible float32 values, offsets 0..512:")
+              for i in range(0, min(512, len(b)-3), 4):
+                  v = struct.unpack_from("<f", b, i)[0]
+                  if math.isfinite(v) and (abs(v) >= 0.0001 and abs(v) <= 100000):
+                      out.append(f"  0x{i:04x}: {v:.7g}")
+              out.append("")
+              # Check aligned 12-byte and 16-byte records for plausible XYZ floats.
+              for stride in (12, 16, 20, 24, 32):
+                  hits = []
+                  for i in range(0, min(len(b)-stride, 8192), 4):
+                      vals = struct.unpack_from("<fff", b, i)
+                      if all(math.isfinite(x) and abs(x) < 10000 for x in vals) and any(abs(x) > 0.001 for x in vals):
+                          hits.append((i, vals))
+                  out.append(f"XYZ-like float triplets in first 8KB (stride hypothesis {stride}; raw offsets): {len(hits)}")
+                  for i, vals in hits[:12]:
+                      out.append(f"  0x{i:04x}: ({vals[0]:.5g}, {vals[1]:.5g}, {vals[2]:.5g})")
+              out.append("")
+          Path("modl-layout-probe.txt").write_text("\n".join(out), encoding="utf-8")
+          print("\n".join(out[:90]))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CrossStrike-MODL-layout-probe
+          path: modl-layout-probe.txt
+          if-no-files-found: error
