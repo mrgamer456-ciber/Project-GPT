@@ -173,6 +173,19 @@ def collect_files(path):
     raise FileNotFoundError("caminho não encontrado: {}".format(path))
 
 
+def validate_output_path(output, input_files):
+    """Reject an output path that aliases any input file."""
+    target = Path(output)
+    target_resolved = target.resolve()
+    for source in input_files:
+        source = Path(source)
+        if target_resolved == source.resolve():
+            raise ValueError("arquivo de saída não pode sobrescrever um arquivo de entrada")
+        if target.exists() and source.exists() and target.samefile(source):
+            raise ValueError("arquivo de saída não pode sobrescrever um arquivo de entrada")
+    return target
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Inspeciona registros binários VERT sem presumir o formato."
@@ -186,10 +199,11 @@ def main(argv=None):
         files = collect_files(args.path)
         if not files:
             raise FileNotFoundError("nenhum arquivo *_VERT_*.bin encontrado")
+        output_path = validate_output_path(args.output, files) if args.output else None
         results = [analyze_file(path, stride=args.stride) for path in files]
         report = render_report(results)
-        if args.output:
-            Path(args.output).write_text(report, encoding="utf-8")
+        if output_path is not None:
+            output_path.write_text(report, encoding="utf-8")
         else:
             sys.stdout.write(report)
     except (OSError, ValueError) as error:
