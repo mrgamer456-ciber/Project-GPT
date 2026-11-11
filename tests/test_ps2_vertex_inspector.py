@@ -50,6 +50,29 @@ class VertexRecordInspectorTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 MODULE.analyze_file(path, stride=3)
 
+    def test_output_path_cannot_overwrite_input_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "COMMON_VERT_04.bin"
+            original = bytes(range(16))
+            path.write_bytes(original)
+
+            with self.assertRaisesRegex(ValueError, "sobrescrever"):
+                MODULE.validate_output_path(path, [path])
+
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_output_symlink_cannot_overwrite_input_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "COMMON_VERT_04.bin"
+            alias = Path(temp) / "report.md"
+            source.write_bytes(bytes(range(16)))
+            alias.symlink_to(source)
+
+            with self.assertRaisesRegex(ValueError, "sobrescrever"):
+                MODULE.validate_output_path(alias, [source])
+
+            self.assertEqual(source.read_bytes(), bytes(range(16)))
+
     def test_directory_only_selects_vertex_sections(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
