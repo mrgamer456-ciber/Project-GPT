@@ -1,0 +1,64 @@
+import importlib.util
+import struct
+import tempfile
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MODULE_PATH = ROOT / "tools" / "ps2-geometry" / "inspect_vertex_records.py"
+SPEC = importlib.util.spec_from_file_location("inspect_vertex_records", MODULE_PATH)
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+
+class VertexRecordInspectorTests(unittest.TestCase):
+    def test_16_byte_records_have_four_safe_float_lanes(self):
+        first = struct.pack("<8H", 1, 2, 3, 4, 5, 6, 7, 8)
+        second = struct.pack("<8H", 101, 102, 103, 104, 105, 106, 107, 108)
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "COMMON_VERT_04.bin"
+            path.write_bytes(first + second)
+            result = MODULE.analyze_file(path)
+
+        self.assertEqual(result["records"], 2)
+        self.assertEqual(result["remainder"], 0)
+        self.assertEqual(len(result["u16_stats"]), 8)
+        self.assertEqual(len(result["f32_stats"]), 4)
+        self.assertEqual(result["u16_stats"][7], {"min": 8, "max": 108})
+
+    def test_trailing_bytes_are_reported_not_unpacked(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "sample_VERT.bin"
+            path.write_bytes(bytes(range(18)))
+            result = MODULE.analyze_file(path)
+
+        self.assertEqual(result["records"], 1)
+        self.assertEqual(result["remainder"], 2)
+
+    def test_empty_file_is_reported_without_crashing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "empty_VERT.bin"
+            path.write_bytes(b"")
+            result = MODULE.analyze_file(path)
+        self.assertEqual(result["records"], 0)
+        self.assertIn("Nenhum registro completo", MODULE.render_report([result]))
+
+    def test_invalid_stride_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "sample.bin"
+            path.write_bytes(bytes(32))
+            with self.assertRaises(ValueError):
+                MODULE.analyze_file(path, stride=3)
+
+    def test_directory_only_selects_vertex_sections(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            vertex = root / "COMMON_VERT_04.bin"
+            other = root / "COMMON_INDX_05.bin"
+            vertex.write_bytes(bytes(16))
+            other.write_bytes(bytes(16))
+            self.assertEqual(MODULE.collect_files(root), [vertex])
+
+
+if __name__ == "__main__":
+    unittest.main()

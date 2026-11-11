@@ -70,11 +70,23 @@ A pasta `samples/cross-strike/` reúne uma amostra ZIP, arquivos PS2 extraídos 
 - **Análise:** `analysis/report.md` documenta cabeçalhos, hashes, seções e strings; `analysis/extracted/` guarda cópias brutas das seções extraídas.
 - **Texturas:** `converted/` contém inspeções e PNGs experimentais de registros TEXR. `converted/alpha-clut-test-v4/` compara interpretações de alpha e ordem de CLUT; são candidatos de comparação, não uma confirmação de renderização idêntica à do jogo.
 - **Edição:** `textures-to-edit/` reúne cópias planas das texturas originais exportadas, sem alterar os BINs de origem.
-- **Geometria experimental:** `models/raw/` guarda seções MODL brutas; `models/geometry/raw/` guarda seções VERT, INDX, MATL e CHNK com inventário e SHA-256. `models/geometry/experimental/FLAT_normalized_experimental.obj` é apenas uma hipótese de visualização: contém 4.588 vértices e 2.288 faces triangulares, mas não tem UVs, normais ou materiais, e as faces usam somente os índices 1–144. Isso sugere que os índices podem ser locais por bloco CHNK e ainda precisam de offsets por bloco para reconstruir a malha corretamente. Não trate esse OBJ como modelo recuperado ou pronto para port.
+- **Geometria experimental:** `models/raw/` guarda seções MODL brutas; `models/geometry/raw/` guarda seções VERT, INDX, MATL e CHNK com inventário e SHA-256. `models/geometry/experimental/FLAT_normalized_experimental.obj` é apenas uma hipótese de visualização: contém 4.588 vértices e 2.288 faces, mas não tem UVs, normais ou materiais; somente 144 índices distintos são usados, deixando 4.444 vértices sem referência. Isso é compatível com a hipótese de índices locais por bloco CHNK, ainda sem offsets de vértice por bloco. Não trate esse OBJ como malha recuperada ou pronta para port.
+
+
+### Inspeção de registros VERT (CLI)
+
+O script `tools/ps2-geometry/inspect_vertex_records.py` analisa arquivos `*_VERT_*.bin` ou uma pasta inteira, com stride configurável (padrão de 16 bytes). Ele mostra HEX, interpretações little-endian u16/i16 e floats f32 somente em offsets alinhados a 4 bytes; não presume que essas lanes sejam posições, UVs ou normais. Exemplo:
+
+```bash
+python3 tools/ps2-geometry/inspect_vertex_records.py samples/cross-strike/models/geometry/raw --output vertex-layout-report.md
+python3 -m unittest discover -s tests -p 'test_ps2_vertex_inspector.py'
+```
+
+A execução de 10/11/2026 do workflow `decode-crossstrike-vertices.yml` falhou com `struct.error`: tentou ler um float32 no offset 14 de um registro de 16 bytes. O script CLI evita essa leitura fora dos limites; o workflow não foi alterado nesta revisão porque possui permissão de escrita e etapa de commit/push.
 
 ### Workflows do Cross Strike
 
-Há 19 workflows em `.github/workflows/`. Dezessete declaram `permissions: contents: write` e incluem etapas que podem publicar resultados com commit e push para `main`; todos os 19 aceitam `workflow_dispatch`. Seis também têm gatilho `push`: `analyze-crossstrike-modl.yml`, `convert-crossstrike-texr-png-v3.yml`, `decode-crossstrike-vertices.yml`, `extract-crossstrike-geometry.yml`, `extract-crossstrike-model-sections.yml` e `inspect-crossstrike-elf-deep.yml`. Os cinco primeiros são acionados por alterações no próprio YAML; o inspetor ELF também reage a mudanças em `samples/cross-strike/PS2/MAIN.ELF`. Os outros dois workflows (`analyze-crossstrike-modl.yml` e `inspect-crossstrike-elf-deep.yml`) geram artifacts e não executam commit/push; o inspetor ELF declara explicitamente `contents: read`. Antes de executar ou editar qualquer workflow, confira suas etapas e os arquivos que ele modifica. Esta documentação não executa workflows automaticamente.
+Há 19 workflows em `.github/workflows/`. Dezessete declaram `permissions: contents: write` e incluem etapas de commit/push para `main`; todos os 19 aceitam `workflow_dispatch`. Seis também têm gatilho `push`: `analyze-crossstrike-modl.yml`, `convert-crossstrike-texr-png-v3.yml`, `decode-crossstrike-vertices.yml`, `extract-crossstrike-geometry.yml`, `extract-crossstrike-model-sections.yml` e `inspect-crossstrike-elf-deep.yml`. Cinco desses seis reagem a alterações no próprio YAML; `inspect-crossstrike-elf-deep.yml` também reage a mudanças em `samples/cross-strike/PS2/MAIN.ELF`. Entre os seis, quatro têm permissão de escrita e fazem commit/push; `analyze-crossstrike-modl.yml` e `inspect-crossstrike-elf-deep.yml` apenas geram artifacts. Antes de executar ou editar qualquer workflow, confira suas etapas e os arquivos que ele modifica. Esta documentação não executa workflows automaticamente.
 
 ### PAK combinado experimental
 
