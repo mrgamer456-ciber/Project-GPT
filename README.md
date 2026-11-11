@@ -82,6 +82,8 @@ python3 tools/ps2-geometry/inspect_vertex_records.py samples/cross-strike/models
 python3 -m unittest discover -s tests -p 'test_ps2_vertex_inspector.py'
 ```
 
+O CLI impede que `--output` aponte para o mesmo arquivo analisado, inclusive por caminho simbólico (symlink), para evitar sobrescrever acidentalmente os BINs originais.
+
 A execução de 10/11/2026 do workflow `decode-crossstrike-vertices.yml` falhou com `struct.error`: tentou ler um float32 no offset 14 de um registro de 16 bytes. O script CLI evita essa leitura fora dos limites; o workflow não foi alterado nesta revisão porque possui permissão de escrita e etapa de commit/push.
 
 ### Workflows do Cross Strike
