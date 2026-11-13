@@ -50,6 +50,23 @@ class VertexRecordInspectorTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 MODULE.analyze_file(path, stride=3)
 
+    def test_even_strides_with_partial_f32_lane_are_supported(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "sample_VERT.bin"
+            for stride in (6, 18):
+                data = bytes(range(stride * 2))
+                path.write_bytes(data)
+                result = MODULE.analyze_file(path, stride=stride)
+
+                self.assertEqual(result["records"], 2)
+                self.assertEqual(result["remainder"], 0)
+                self.assertEqual(len(result["f32_stats"]), stride // 4)
+                expected = struct.unpack(
+                    "<" + ("f" * (stride // 4)),
+                    data[:(stride // 4) * 4],
+                )
+                self.assertEqual(result["preview"][0]["f32"], expected)
+
     def test_output_path_cannot_overwrite_input_file(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "COMMON_VERT_04.bin"
