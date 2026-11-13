@@ -1,5 +1,6 @@
 import importlib.util
 import struct
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -89,6 +90,22 @@ class VertexRecordInspectorTests(unittest.TestCase):
                 MODULE.validate_output_path(alias, [source])
 
             self.assertEqual(source.read_bytes(), bytes(range(16)))
+
+    def test_output_hardlink_cannot_overwrite_input_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "COMMON_VERT_04.bin"
+            alias = Path(temp) / "report.md"
+            original = bytes(range(16))
+            source.write_bytes(original)
+            try:
+                os.link(source, alias)
+            except (OSError, NotImplementedError) as error:
+                self.skipTest("hard links não estão disponíveis neste ambiente: {}".format(error))
+
+            with self.assertRaisesRegex(ValueError, "sobrescrever"):
+                MODULE.validate_output_path(alias, [source])
+
+            self.assertEqual(source.read_bytes(), original)
 
     def test_directory_only_selects_vertex_sections(self):
         with tempfile.TemporaryDirectory() as temp:
