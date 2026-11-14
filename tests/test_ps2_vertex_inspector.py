@@ -74,6 +74,17 @@ class VertexRecordInspectorTests(unittest.TestCase):
                         expected,
                     )
 
+    def test_non_finite_f32_values_are_excluded_from_statistics(self):
+        payload = struct.pack("<4f", float("nan"), float("inf"), float("-inf"), -2.5)
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "sample_VERT.bin"
+            path.write_bytes(payload)
+            result = MODULE.analyze_file(path, stride=16)
+
+        for lane in range(3):
+            self.assertEqual(result["f32_stats"][lane], {"min": None, "max": None})
+        self.assertEqual(result["f32_stats"][3], {"min": -2.5, "max": -2.5})
+
     def test_output_path_cannot_overwrite_input_file(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "COMMON_VERT_04.bin"
