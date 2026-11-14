@@ -84,6 +84,11 @@ class VertexRecordInspectorTests(unittest.TestCase):
         for lane in range(3):
             self.assertEqual(result["f32_stats"][lane], {"min": None, "max": None})
         self.assertEqual(result["f32_stats"][3], {"min": -2.5, "max": -2.5})
+        self.assertEqual(result["f32_finite_counts"], [0, 0, 0, 1])
+        self.assertEqual(result["f32_non_finite_counts"], [1, 1, 1, 0])
+        report = MODULE.render_report([result])
+        self.assertIn("| 0 | n/a | 0 | 1 |", report)
+        self.assertIn("| 3 | -2.5 .. -2.5 | 1 | 0 |", report)
 
     def test_output_path_cannot_overwrite_input_file(self):
         with tempfile.TemporaryDirectory() as temp:
