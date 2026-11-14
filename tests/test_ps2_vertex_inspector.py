@@ -62,11 +62,17 @@ class VertexRecordInspectorTests(unittest.TestCase):
                 self.assertEqual(result["records"], 2)
                 self.assertEqual(result["remainder"], 0)
                 self.assertEqual(len(result["f32_stats"]), stride // 4)
-                expected = struct.unpack(
-                    "<" + ("f" * (stride // 4)),
-                    data[:(stride // 4) * 4],
-                )
-                self.assertEqual(result["preview"][0]["f32"], expected)
+                f32_size = (stride // 4) * 4
+                for record_index in range(2):
+                    start = record_index * stride
+                    expected = struct.unpack(
+                        "<" + ("f" * (stride // 4)),
+                        data[start:start + f32_size],
+                    )
+                    self.assertEqual(
+                        result["preview"][record_index]["f32"],
+                        expected,
+                    )
 
     def test_output_path_cannot_overwrite_input_file(self):
         with tempfile.TemporaryDirectory() as temp:
