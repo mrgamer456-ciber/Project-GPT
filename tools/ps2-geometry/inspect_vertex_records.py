@@ -42,6 +42,8 @@ def analyze_file(path, stride=16, preview_records=12):
     u16_stats = _empty_ranges(u16_count)
     i16_stats = _empty_ranges(u16_count)
     f32_stats = _empty_ranges(f32_count)
+    f32_finite_counts = [0] * f32_count
+    f32_non_finite_counts = [0] * f32_count
     preview = []
     digest = hashlib.sha256()
     u16_format = "<" + ("H" * u16_count)
@@ -66,6 +68,9 @@ def analyze_file(path, stride=16, preview_records=12):
             for lane, value in enumerate(f32_values):
                 if math.isfinite(value):
                     _add_value(f32_stats[lane], value)
+                    f32_finite_counts[lane] += 1
+                else:
+                    f32_non_finite_counts[lane] += 1
 
             if record_index < preview_records:
                 preview.append({
@@ -89,6 +94,8 @@ def analyze_file(path, stride=16, preview_records=12):
         "u16_stats": u16_stats,
         "i16_stats": i16_stats,
         "f32_stats": f32_stats,
+        "f32_finite_counts": f32_finite_counts,
+        "f32_non_finite_counts": f32_non_finite_counts,
         "preview": preview,
     }
 
@@ -159,11 +166,16 @@ def render_report(results):
 
         lines.extend([
             "",
-            "| Lane f32 (offset relativo ao registro) | f32 min..max |",
-            "|---:|---:|",
+            "| Lane f32 (offset relativo ao registro) | f32 min..max | Finitos | Não finitos |",
+            "|---:|---:|---:|---:|",
         ])
         for lane, values in enumerate(result["f32_stats"]):
-            lines.append("| {} | {} |".format(lane, _range_text(values, True)))
+            lines.append("| {} | {} | {} | {} |".format(
+                lane,
+                _range_text(values, True),
+                result["f32_finite_counts"][lane],
+                result["f32_non_finite_counts"][lane],
+            ))
         lines.append("")
 
     return "\n".join(lines) + "\n"
