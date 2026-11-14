@@ -75,7 +75,7 @@ A pasta `samples/cross-strike/` reúne uma amostra ZIP, arquivos PS2 extraídos 
 
 ### Inspeção de registros VERT (CLI)
 
-O script `tools/ps2-geometry/inspect_vertex_records.py` analisa arquivos `*_VERT_*.bin` ou uma pasta inteira, com stride configurável (padrão de 16 bytes). Ele mostra HEX, interpretações little-endian u16/i16 e floats f32 somente em offsets alinhados a 4 bytes; não presume que essas lanes sejam posições, UVs ou normais. Exemplo:
+O script `tools/ps2-geometry/inspect_vertex_records.py` analisa arquivos `*_VERT_*.bin` ou uma pasta inteira, com stride configurável (padrão de 16 bytes). Ele mostra HEX, interpretações little-endian u16/i16 e blocos f32 nos offsets 0, 4, 8... relativos ao início de cada registro; se o stride não for múltiplo de 4, registros posteriores podem começar em offsets absolutos não alinhados a 4 bytes. Não presume que essas lanes sejam posições, UVs ou normais. Exemplo:
 
 ```bash
 python3 tools/ps2-geometry/inspect_vertex_records.py samples/cross-strike/models/geometry/raw --output vertex-layout-report.md
