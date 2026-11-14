@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Inspect fixed-size binary vertex records without assuming a confirmed layout.
 
-The report shows raw bytes plus independent little-endian u16, i16 and aligned
-f32 interpretations. It does not claim that any lane is a position, UV or normal.
+The report shows raw bytes plus independent little-endian u16/i16 interpretations
+and f32 chunks at offsets 0, 4, 8, ... relative to each record. When the stride is
+not divisible by four, later records can begin at non-4-byte absolute file offsets.
+No lane is claimed to be a position, UV or normal.
 """
 import argparse
 import hashlib
@@ -104,7 +106,10 @@ def render_report(results):
         "# PS2 geometry — packed vertex record probe",
         "",
         "As leituras u16/i16/f32 são interpretações numéricas independentes. "
-        "Nenhuma lane é identificada automaticamente como posição, UV, normal ou cor.",
+        "Os f32 começam nos offsets 0, 4, 8... relativos ao início de cada registro; "
+        "com stride não múltiplo de 4, registros posteriores podem começar em offsets "
+        "absolutos não alinhados a 4 bytes. Nenhuma lane é identificada automaticamente "
+        "como posição, UV, normal ou cor.",
         "",
     ]
     for result in results:
@@ -125,7 +130,7 @@ def render_report(results):
         lines.extend([
             "### Primeiros registros",
             "",
-            "| Registro | HEX | u16 little-endian | i16 little-endian | f32 alinhado (4 bytes) |",
+            "| Registro | HEX | u16 little-endian | i16 little-endian | f32 por offset relativo (passo 4 bytes) |",
             "|---:|---|---|---|---|",
         ])
         for record in result["preview"]:
@@ -154,7 +159,7 @@ def render_report(results):
 
         lines.extend([
             "",
-            "| Lane f32 alinhada (4 bytes) | f32 min..max |",
+            "| Lane f32 (offset relativo ao registro) | f32 min..max |",
             "|---:|---:|",
         ])
         for lane, values in enumerate(result["f32_stats"]):
