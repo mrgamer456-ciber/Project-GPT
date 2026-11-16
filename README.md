@@ -86,6 +86,19 @@ As estatísticas f32 ignoram NaN e infinito nos cálculos de mínimo/máximo, ma
 
 A execução de 10/11/2026 do workflow `decode-crossstrike-vertices.yml` falhou com `struct.error`: tentou ler um float32 no offset 14 de um registro de 16 bytes. O script CLI evita essa leitura fora dos limites; o workflow não foi alterado nesta revisão porque possui permissão de escrita e etapa de commit/push.
 
+### Inspeção de índices INDX (CLI)
+
+O script `tools/ps2-geometry/inspect_index_records.py` lê arquivos `*_INDX_*.bin` em blocos, interpreta pares completos como u16 little-endian e informa quantidade, faixa, valores distintos, zeros, SHA-256 e bytes finais incompletos. Ele não presume que os valores formem triângulos nem que sejam índices globais de VERT; offsets por bloco CHNK e a topologia continuam sem confirmação. Um tamanho ímpar é reportado sem tentar desempacotar o byte restante.
+
+Exemplo e testes:
+
+```bash
+python3 tools/ps2-geometry/inspect_index_records.py samples/cross-strike/models/geometry/raw --output index-layout-report.md
+python3 -m unittest discover -s tests -p 'test_ps2_index_inspector.py'
+```
+
+A suíte cobre valores little-endian, arquivo vazio, byte final incompleto, seleção de arquivos INDX e proteção contra sobrescrita direta, symlink e hard link. O workflow `decode-crossstrike-vertices.yml` ainda tem uma falha independente: além da leitura f32 no offset 14 de um registro de 16 bytes, o desempacotamento em lote de u16 pode falhar se um INDX tiver tamanho ímpar de pelo menos 3 bytes. O workflow não foi alterado.
+
 ### Workflows do Cross Strike
 
 Há 19 workflows em `.github/workflows/`. Dezessete declaram `permissions: contents: write` e incluem etapas de commit/push para `main`; todos os 19 aceitam `workflow_dispatch`. Seis também têm gatilho `push`: `analyze-crossstrike-modl.yml`, `convert-crossstrike-texr-png-v3.yml`, `decode-crossstrike-vertices.yml`, `extract-crossstrike-geometry.yml`, `extract-crossstrike-model-sections.yml` e `inspect-crossstrike-elf-deep.yml`. Cinco desses seis reagem a alterações no próprio YAML; `inspect-crossstrike-elf-deep.yml` também reage a mudanças em `samples/cross-strike/PS2/MAIN.ELF`. Entre os seis, quatro têm permissão de escrita e fazem commit/push; `analyze-crossstrike-modl.yml` e `inspect-crossstrike-elf-deep.yml` apenas geram artifacts. Antes de executar ou editar qualquer workflow, confira suas etapas e os arquivos que ele modifica. Esta documentação não executa workflows automaticamente. O probe `analyze-crossstrike-modl.yml` também é exploratório: o loop percorre offsets em passos fixos de 4 bytes e não usa o stride candidato como passo; portanto, seus resultados não são comparações independentes de registros de 12/16/20/24/32 bytes.
