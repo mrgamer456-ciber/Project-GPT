@@ -30,7 +30,7 @@ class IndexRecordInspectorTests(unittest.TestCase):
         self.assertEqual(result["sha256"], hashlib.sha256(payload).hexdigest())
 
     def test_odd_trailing_byte_is_reported_without_unpack_error(self):
-        payload = b"\\x01\\x00\\x02"
+        payload = b"\x01\x00\x02"
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "sample_INDX.bin"
             path.write_bytes(payload)
@@ -58,7 +58,7 @@ class IndexRecordInspectorTests(unittest.TestCase):
                 MODULE.analyze_file(path, preview_values=-1)
 
     def test_streams_multiple_chunks_and_preserves_odd_tail(self):
-        payload = bytes(range(256)) * 256 + b"\\xaa"
+        payload = bytes(range(256)) * 256 + b"\xaa"
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "COMMON_INDX_04.bin"
             path.write_bytes(payload)
@@ -77,14 +77,14 @@ class IndexRecordInspectorTests(unittest.TestCase):
             root = Path(temp)
             index = root / "COMMON_INDX_04.bin"
             other = root / "COMMON_VERT_04.bin"
-            index.write_bytes(b"\\x00\\x00")
+            index.write_bytes(b"\x00\x00")
             other.write_bytes(bytes(16))
             self.assertEqual(MODULE.collect_files(root), [index])
 
     def test_output_cannot_overwrite_input(self):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / "COMMON_INDX_04.bin"
-            source.write_bytes(b"\\x00\\x00")
+            source.write_bytes(b"\x00\x00")
             with self.assertRaisesRegex(ValueError, "sobrescrever"):
                 MODULE.validate_output_path(source, [source])
 
@@ -92,7 +92,7 @@ class IndexRecordInspectorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / "COMMON_INDX_04.bin"
             alias = Path(temp) / "report.md"
-            source.write_bytes(b"\\x00\\x00")
+            source.write_bytes(b"\x00\x00")
             alias.symlink_to(source)
             with self.assertRaisesRegex(ValueError, "sobrescrever"):
                 MODULE.validate_output_path(alias, [source])
@@ -101,22 +101,13 @@ class IndexRecordInspectorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / "COMMON_INDX_04.bin"
             alias = Path(temp) / "report.md"
-            source.write_bytes(b"\\x00\\x00")
+            source.write_bytes(b"\x00\x00")
             try:
                 os.link(source, alias)
             except (OSError, NotImplementedError) as error:
                 self.skipTest("hard links indisponíveis: {}".format(error))
             with self.assertRaisesRegex(ValueError, "sobrescrever"):
                 MODULE.validate_output_path(alias, [source])
-
-    def test_directory_only_selects_index_sections(self):
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            index = root / "COMMON_INDX_04.bin"
-            other = root / "COMMON_VERT_04.bin"
-            index.write_bytes(b"\\x00\\x00")
-            other.write_bytes(bytes(16))
-            self.assertEqual(MODULE.collect_files(root), [index])
 
 
 if __name__ == "__main__":
