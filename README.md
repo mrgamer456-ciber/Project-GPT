@@ -92,7 +92,7 @@ Há 19 workflows em `.github/workflows/`. Dezessete declaram `permissions: conte
 
 ### Runtime das GitHub Actions
 
-Todos os 19 workflows usam `actions/checkout@v4`; 18 também usam `actions/upload-artifact@v4`. Essas versões declaram o runtime Node.js 20. O GitHub removeu Node.js 20 dos runners em 23/09/2026 e agora executa ações JavaScript em Node.js 24; por isso, essas referências precisam de uma atualização planejada e testada. Como referência, `actions/checkout@v5` (ou posterior) e `actions/upload-artifact@v6` (ou posterior) já usam Node.js 24. Como 17 workflows podem fazer commit/push para `main`, não atualize tudo em massa sem validar cada fluxo. Esta nota é documental: nenhum workflow foi alterado ou executado nesta revisão.
+Todos os 19 workflows usam `actions/checkout@v4`; 18 também usam `actions/upload-artifact@v4`. Essas versões declaram o runtime Node.js 20. O GitHub removeu Node.js 20 dos runners em 23/09/2026 e agora executa ações JavaScript em Node.js 24; por isso, essas referências precisam de uma atualização planejada e testada. Como versões estáveis mais recentes verificadas em 16/11/2026, `actions/checkout@v7.0.1` e `actions/upload-artifact@v7.0.2` já estão publicadas; as séries `checkout@v5+` e `upload-artifact@v6+` são as linhas compatíveis com Node.js 24. Confira as notas de versão oficiais de [checkout](https://github.com/actions/checkout/releases) e [upload-artifact](https://github.com/actions/upload-artifact/releases) antes da migração. Como 17 workflows podem fazer commit/push para `main`, não atualize tudo em massa sem validar cada fluxo. Esta nota é documental: nenhum workflow foi alterado ou executado nesta revisão.
 
 ### PAK combinado experimental
 
