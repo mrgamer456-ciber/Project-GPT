@@ -1,8 +1,10 @@
 import importlib.util
+import io
 import struct
 import os
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -128,6 +130,21 @@ class VertexRecordInspectorTests(unittest.TestCase):
                 MODULE.validate_output_path(alias, [source])
 
             self.assertEqual(source.read_bytes(), original)
+
+    def test_file_growth_during_read_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "sample_VERT.bin"
+            path.write_bytes(bytes(16))
+
+            # Keep the initial stat size at 16 bytes while presenting a stream
+            # with appended data, simulating a file that grows during analysis.
+            with mock.patch.object(
+                MODULE.Path,
+                "open",
+                lambda self, *args, **kwargs: io.BytesIO(bytes(32)),
+            ):
+                with self.assertRaisesRegex(OSError, "arquivo mudou durante a leitura"):
+                    MODULE.analyze_file(path, stride=16)
 
     def test_directory_only_selects_vertex_sections(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -46,6 +46,7 @@ def analyze_file(path, stride=16, preview_records=12):
     f32_non_finite_counts = [0] * f32_count
     preview = []
     digest = hashlib.sha256()
+    bytes_read = 0
     u16_format = "<" + ("H" * u16_count)
     i16_format = "<" + ("h" * u16_count)
     f32_format = "<" + ("f" * f32_count)
@@ -56,6 +57,7 @@ def analyze_file(path, stride=16, preview_records=12):
             if len(record) != stride:
                 raise OSError("arquivo mudou durante a leitura")
 
+            bytes_read += len(record)
             digest.update(record)
             u16_values = struct.unpack(u16_format, record)
             i16_values = struct.unpack(i16_format, record)
@@ -82,7 +84,14 @@ def analyze_file(path, stride=16, preview_records=12):
                 })
 
         tail = stream.read(remainder)
+        bytes_read += len(tail)
+        if len(tail) != remainder:
+            raise OSError("arquivo mudou durante a leitura")
         digest.update(tail)
+        # Detect appended bytes too; otherwise a growing file could yield a
+        # report that silently covers only the size observed before opening.
+        if bytes_read != size or stream.read(1):
+            raise OSError("arquivo mudou durante a leitura")
 
     return {
         "path": str(path),

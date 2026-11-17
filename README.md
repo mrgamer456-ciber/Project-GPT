@@ -82,7 +82,7 @@ python3 tools/ps2-geometry/inspect_vertex_records.py samples/cross-strike/models
 python3 -m unittest discover -s tests -p 'test_ps2_vertex_inspector.py'
 ```
 
-As estatísticas f32 ignoram NaN e infinito nos cálculos de mínimo/máximo, mas o relatório também mostra, por lane, quantos valores finitos e não finitos foram encontrados. Assim, uma faixa `n/a` não esconde a presença de valores inválidos. O CLI impede que `--output` aponte para o mesmo arquivo analisado, inclusive por caminho simbólico (symlink) ou hard link, para evitar sobrescrever acidentalmente os BINs originais. O teste de hard link é ignorado automaticamente em ambientes que não oferecem suporte a esse recurso.
+As estatísticas f32 ignoram NaN e infinito nos cálculos de mínimo/máximo, mas o relatório também mostra, por lane, quantos valores finitos e não finitos foram encontrados. Assim, uma faixa `n/a` não esconde a presença de valores inválidos. A leitura também rejeita truncamento ou bytes adicionais observados durante a análise, evitando gerar um relatório parcial quando o tamanho do arquivo muda. O CLI impede que `--output` aponte para o mesmo arquivo analisado, inclusive por caminho simbólico (symlink) ou hard link, para evitar sobrescrever acidentalmente os BINs originais. O teste de hard link é ignorado automaticamente em ambientes que não oferecem suporte a esse recurso.
 
 A execução de 10/11/2026 do workflow `decode-crossstrike-vertices.yml` falhou com `struct.error`: tentou ler um float32 no offset 14 de um registro de 16 bytes. O script CLI evita essa leitura fora dos limites; o workflow não foi alterado nesta revisão porque possui permissão de escrita e etapa de commit/push.
 
