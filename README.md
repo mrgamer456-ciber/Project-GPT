@@ -97,7 +97,7 @@ python3 tools/ps2-geometry/inspect_index_records.py samples/cross-strike/models/
 python3 -m unittest discover -s tests -p 'test_ps2_index_inspector.py'
 ```
 
-A suíte cobre valores little-endian, arquivo vazio, byte final incompleto, seleção de arquivos INDX e proteção contra sobrescrita direta, symlink e hard link. O workflow `decode-crossstrike-vertices.yml` ainda tem uma falha independente: além da leitura f32 no offset 14 de um registro de 16 bytes, o desempacotamento em lote de u16 pode falhar se um INDX tiver tamanho ímpar de pelo menos 3 bytes. O workflow não foi alterado.
+A suíte cobre valores little-endian, arquivo vazio, byte final incompleto, leitura em blocos de 64 KiB, detecção de truncamento ou crescimento durante a leitura, seleção de arquivos INDX e proteção contra sobrescrita direta, symlink e hard link. O workflow `decode-crossstrike-vertices.yml` ainda tem uma falha independente: além da leitura f32 no offset 14 de um registro de 16 bytes, o desempacotamento em lote de u16 pode falhar se um INDX tiver tamanho ímpar de pelo menos 3 bytes. O workflow não foi alterado.
 
 ### Workflows do Cross Strike
 

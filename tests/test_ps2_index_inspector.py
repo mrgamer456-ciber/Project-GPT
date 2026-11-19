@@ -1,9 +1,11 @@
 import hashlib
 import importlib.util
+import io
 import os
 import struct
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,6 +73,34 @@ class IndexRecordInspectorTests(unittest.TestCase):
         self.assertEqual(result["unique_count"], 128)
         self.assertEqual(result["zero_count"], 0)
         self.assertEqual(result["sha256"], hashlib.sha256(payload).hexdigest())
+
+    def test_file_growth_during_read_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "sample_INDX.bin"
+            path.write_bytes(b"\x01\x00")
+
+            # Simulate a file that grows after the initial stat call.
+            with mock.patch.object(
+                MODULE.Path,
+                "open",
+                lambda self, *args, **kwargs: io.BytesIO(b"\x01\x00\x02\x00"),
+            ):
+                with self.assertRaisesRegex(OSError, "arquivo mudou durante a leitura"):
+                    MODULE.analyze_file(path)
+
+    def test_file_truncation_during_read_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "sample_INDX.bin"
+            path.write_bytes(b"\x01\x00\x02\x00")
+
+            # Simulate a file truncated after the initial stat call.
+            with mock.patch.object(
+                MODULE.Path,
+                "open",
+                lambda self, *args, **kwargs: io.BytesIO(b"\x01\x00"),
+            ):
+                with self.assertRaisesRegex(OSError, "arquivo mudou durante a leitura"):
+                    MODULE.analyze_file(path)
 
     def test_directory_only_selects_index_sections(self):
         with tempfile.TemporaryDirectory() as temp:
